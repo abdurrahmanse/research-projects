@@ -58,8 +58,21 @@ The three CSV files in `projects/` are byte-identical copies of the same dataset
 | Soft voting (LR + RF) | 0.741 [0.678, 0.804] | 0.820 | — |
 | **CGTH (proposed)** | **0.757 [0.700, 0.813]** | 0.809 | **68%** |
 
+**Stricter version (Task 17):** with δ chosen inside each training fold, CGTH reaches balanced accuracy 0.750 [0.687, 0.813] with **77% of decisions made by LR**. The chosen δ was mostly 0.10–0.20, which supports δ = 0.2 as a reasonable default.
+
+**Screening operating point (Task 18):** with the threshold chosen on training data to catch 90% of anxious answers:
+
+| Model | Sensitivity | Specificity |
+|---|---|---|
+| Logistic regression | 0.902 | 0.496 |
+| Random forest | 0.897 | 0.558 |
+| CGTH (δ in fold) | 0.897 | 0.509 |
+
+At 90% sensitivity, random forest gives the fewest false alarms; CGTH sits close to LR.
+
 Points to report honestly:
-- δ = 0.2 was chosen after an exploratory check of a few values. The full δ curve (notebook Task 12) is reported so the choice is visible.
+- The main δ = 0.2 was chosen after an exploratory check; Task 17 confirms the result when δ is chosen inside each training fold.
+- Tested alternatives (tuned RF, Extra Trees, SVM, gradient boosting, naive Bayes, k-NN, class balancing) all reached 0.69–0.77 balanced accuracy. About 0.76 is the ceiling for this dataset without leakage.
 - The ROC-AUC of CGTH is lower than RF's, because mixing two models' probabilities blurs the ranking. CGTH is a decision rule, so decision metrics are primary.
 - Gating to a stronger model when uncertain is an existing idea in machine learning. The contribution here is applying a transparent-first version to postpartum survey screening and reporting coverage.
 
@@ -111,7 +124,8 @@ All random seeds are fixed (`SEED = 42`). Different library versions can change 
 
 - [x] Data audit and leakage check
 - [x] Proposed hybrid (CGTH) with hypothesis tests and robustness checks
-- [ ] Choose δ inside each training fold (removes the exploratory-selection concern)
+- [x] Choose δ inside each training fold (Task 17)
+- [x] Screening threshold at 90% sensitivity (Task 18)
 - [ ] Performance by age band (the only fairness check this data allows)
 - [ ] Resolve dataset provenance and licence
 - [ ] Verify every citation marked ⚠ in the literature table

@@ -33,7 +33,12 @@ Model cascades and "defer when uncertain" designs already exist in machine learn
 - **Leakage:** keeping duplicates inflates balanced accuracy to 0.84–0.86 for every model.
 - **Guilt dependence:** without the guilt item, every model falls to about 0.60.
 
+## Added results (Tasks 16–18)
+- **δ chosen inside each training fold (Task 17):** balanced accuracy 0.750 [0.687, 0.813], LR coverage 77%. The chosen δ ranged 0–0.30, mostly 0.10–0.20.
+- **Screening at 90% sensitivity (Task 18):** specificity LR 0.496, RF 0.558, CGTH 0.509. At this operating point RF gives the fewest false alarms.
+- **Performance ceiling:** tuned RF, Extra Trees, SVM, HistGradientBoosting, categorical naive Bayes, k-NN and class balancing all reached 0.69–0.77 balanced accuracy (exploratory runs, not in the notebook). About 0.76 is the ceiling for this dataset without leakage.
+
 ## Limitations to state in the thesis
-- δ = 0.2 was chosen after an exploratory check of δ = 0.1, 0.2 and 0.3. The full δ curve (Task 12) is reported so readers can see the result is not cherry-picked. A stricter version would choose δ inside each training fold.
+- The main δ = 0.2 was chosen after an exploratory check of δ = 0.1, 0.2 and 0.3. Task 17 addresses this by choosing δ inside each training fold, and the full δ curve (Task 12) is reported.
 - ROC-AUC of CGTH (0.809) is lower than RF (0.835), because mixing two models' probabilities blurs the ranking. CGTH is a decision rule, so decision metrics are primary; AUC is still reported.
 - The data limitations in doc 01 still apply: a single self-reported item as the label, 78 % duplicates, and an implausible guilt association.
