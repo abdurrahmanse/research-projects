@@ -17,7 +17,7 @@
 
 | ID | Title | Fit to data | Own contribution | Complexity for a beginner |
 |---|---|---|---|---|
-| **T1** | *A Confidence-Gated Transparent Hybrid of Logistic Regression and Random Forest for Explainable Screening Support of Self-Reported Postpartum Anxiety Symptoms* | High | **Yes: a hybrid method plus a coverage measure** | Low (2 base models, 1 rule) |
+| **T1** | *Interpretable Postpartum Anxiety Symptom Screening Using Confidence-Gated Hybrid Machine Learning* | High | **Yes: a hybrid method plus a coverage measure** | Low (2 base models, 1 rule) |
 | T2 | *Reliability of Explainable ML Benchmarks for Postpartum Anxiety Symptom Prediction: A Leakage-Aware Evaluation* | High | Methodological audit only | Medium (many models and analyses) |
 | T3 | *Data Quality Before Model Complexity: Duplication and Label Validity in Postpartum Mental-Health Survey ML* | High | Data audit only | Low, but narrower |
 | T4 | *Symptom-Level Postpartum Anxiety Screening Support: A Dual-Dataset Study* | Only with a second, EPDS-labelled dataset | High | Higher |
@@ -29,7 +29,7 @@
 2. **It is testable** with two pre-stated hypotheses (non-inferior to RF, better than LR) and one extra measure, coverage: the share of decisions made by the transparent model.
 3. **It fits the data.** LR is reliable when confident (0.81 accuracy) and weak near 0.5 (0.61), where RF does better (0.71). The gate exploits exactly this pattern.
 4. **It keeps the audit findings** (duplicates, guilt dependence) as robustness checks instead of hiding them.
-5. **It is small:** 2 base models, 1 comparator hybrid, 15 notebook tasks.
+5. **It is small:** 2 base models, 1 comparator hybrid, 18 notebook tasks.
 
 T2 and T3 are kept as background: their findings appear in the thesis as the data-audit chapter.
 

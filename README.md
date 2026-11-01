@@ -1,4 +1,4 @@
-# A Confidence-Gated Transparent Hybrid of Logistic Regression and Random Forest for Explainable Screening Support of Self-Reported Postpartum Anxiety Symptoms
+# Interpretable Postpartum Anxiety Symptom Screening Using Confidence-Gated Hybrid Machine Learning
 
 > **Working title.** The project began as *"Early Screening and Risk Stratification of Postpartum Depression and Anxiety Using Explainable Ensemble Machine Learning: A Comparative Benchmark"*. After auditing the data, the scope was narrowed to what the dataset supports (see [Scope and claims](#scope-and-claims)).
 
@@ -137,7 +137,6 @@ All random seeds are fixed (`SEED = 42`). Different library versions can change 
 The data contain sensitive self-reported mental-health items, including a suicide-related question. Never present its rates as clinical prevalence. The model is not for individual clinical use. The dataset licence is unverified, so check Kaggle's terms before redistributing the CSV.
 
 ```
-Author (2026). A Confidence-Gated Transparent Hybrid of Logistic Regression and Random Forest
-for Explainable Screening Support of Self-Reported Postpartum Anxiety Symptoms.
+Author (2026). Interpretable Postpartum Anxiety Symptom Screening Using Confidence-Gated Hybrid Machine Learning.
 Unpublished thesis project. GitHub repository: research-projects.
 ```

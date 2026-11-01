@@ -1,8 +1,8 @@
 # Research Blueprint
 
-**Title:** A Confidence-Gated Transparent Hybrid of Logistic Regression and Random Forest for Explainable Screening Support of Self-Reported Postpartum Anxiety Symptoms
+**Title:** Interpretable Postpartum Anxiety Symptom Screening Using Confidence-Gated Hybrid Machine Learning
 
-**Main notebook:** `projects/cgth_hybrid_study.ipynb` (15 tasks, one per cell; the dataset is only read). Outputs go to `projects/results_cgth/`.
+**Main notebook:** `projects/cgth_hybrid_study.ipynb` (18 tasks, one per cell; the dataset is only read). Outputs go to `projects/results_cgth/`.
 
 **Method in one sentence:** logistic regression decides every case it is confident about (|p − 0.5| ≥ 0.2); only uncertain cases go to a random forest.
 
