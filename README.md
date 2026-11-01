@@ -1,4 +1,4 @@
-# Symptom-Based Screening for Postpartum Anxiety: A Leakage-Aware Comparison of Machine-Learning Models
+# A Confidence-Gated Transparent Hybrid of Logistic Regression and Random Forest for Explainable Screening Support of Self-Reported Postpartum Anxiety Symptoms
 
 > **Working title.** The project began as *"Early Screening and Risk Stratification of Postpartum Depression and Anxiety Using Explainable Ensemble Machine Learning: A Comparative Benchmark"*. After auditing the data, the scope was narrowed to what the dataset supports (see [Scope and claims](#scope-and-claims)).
 
@@ -8,88 +8,73 @@
 
 ## Abstract
 
-Postpartum mood and anxiety symptoms are common and often missed, and many published machine-learning studies report high accuracy without checking for data leakage or calibration. This project benchmarks nine models (from a dummy baseline and logistic regression to random forests, boosting, and voting and stacking ensembles) on a public Kaggle survey of 1,503 postpartum responses. The task is to predict a self-reported *Feeling anxious* item from eight other symptom items and age band. The evaluation is designed to avoid leakage: identical answer patterns are never split between training and test data, models are compared with repeated cross-validation, and a locked test set is used once.
+Simple models are easy to explain but often less accurate. Complex models are more accurate but harder to explain. This project proposes a small hybrid, the **Confidence-Gated Transparent Hybrid (CGTH)**. A logistic regression makes every decision it is confident about, and only uncertain cases (predicted probability close to 0.5) are passed to a random forest. The task is to predict a self-reported *Feeling anxious* item from eight other survey items in a public Kaggle dataset of postpartum responses.
 
-On 326 distinct responses, the selected random forest reached a **test ROC-AUC of 0.795 (95% interval 0.67–0.90)** against 0.50 for a no-skill baseline, with moderate overfitting (training AUC 0.93). Ensembles did not outperform the best single model. About 78% of the raw rows repeat an earlier answer pattern, and evaluating on the raw rows with an ordinary split inflated AUC by roughly 0.04–0.08 (0.999 for an unrestricted forest). The results are methodological and exploratory; they are not a clinical tool.
+On 326 distinct responses, evaluated with 5-fold cross-validation repeated 10 times, CGTH reached a **balanced accuracy of 0.757 (95% CI 0.700–0.813)**. That is statistically non-inferior to the random forest (0.761), while **68% of decisions were made by the transparent logistic regression**. CGTH was not significantly better than logistic regression alone (0.730, p = 0.08). The dataset has serious limitations (78% duplicate rows, a single-item label, heavy reliance on one question), so the results are methodological and exploratory. This is not a clinical tool.
 
-## Research questions
+## Research questions and hypotheses
 
-1. How well can symptom items screen for the self-reported anxious-feeling item, compared with a no-skill baseline?
-2. Do ensemble (voting, stacking) models improve on the best single model?
-3. How much do repeated answer patterns inflate reported performance?
-4. Can calibrated probabilities support exploratory low / medium / high tiers?
-5. Which questions does the model rely on?
+| | Question | Result |
+|---|---|---|
+| H1 | Is CGTH non-inferior to random forest (margin 0.03 balanced accuracy)? | **Supported** (difference −0.005, one-sided p < 0.001) |
+| H2 | Is CGTH better than logistic regression? | Not supported (+0.026, p = 0.08) |
+| RQ3 | Why does the gate work? | LR is 81% accurate on confident cases but 61% on uncertain ones; RF reaches 71% on the uncertain ones |
+| RQ4 | How much do duplicate rows inflate results? | Balanced accuracy rises from about 0.76 to 0.84–0.86 when duplicates are kept |
+| RQ5 | How much do models rely on one question? | Without *Feeling of guilt*, every model drops to about 0.60 |
 
 ## Dataset
 
 | | |
 |---|---|
 | Source | Kaggle, *PostPartum Depression* (uploader `parvezalmuqtadir2348`) |
-| Size | 1,503 rows, 11 columns (timestamp, age band, 8 symptom items incl. the target, 1 suicide-related item) |
-| Target | `Feeling anxious` (Yes = 65.2% raw, 58.0% after removing repeats) |
-| Provenance | **Undocumented.** A third-party listing describes a hospital questionnaire collected via Google Forms; licence, ethics approval and eligibility are unverified |
-| Quality findings | 27 missing cells (<2%); 90 distinct timestamps; only 326 distinct answer patterns, so 78% of rows repeat an earlier one |
+| Size | 1,503 rows, 11 columns (timestamp, age band, 9 survey items including the target) |
+| Target | `Feeling anxious` (Yes = 58.0% of unique rows) |
+| Provenance | **Undocumented.** A third-party listing describes a hospital questionnaire collected via Google Forms. Licence, ethics approval and eligibility are unverified |
+| Quality findings | 27 missing cells; only 90 distinct timestamps; only 326 distinct answer patterns, so 78% of rows are duplicates; *guilt* is inversely related to anxiety, which is clinically implausible |
 
-The three CSV files in `projects/` are byte-identical copies of the same dataset.
+The three CSV files in `projects/` are byte-identical copies of the same dataset. The notebook only reads `post natal data.csv` and never changes it.
 
 ## Method in brief
 
 | Step | What is done |
 |---|---|
-| Data | Remove repeated rows (primary analysis); group rows by answer pattern |
-| Split | 80/20 stratified, grouped by pattern; test set used once |
-| Preprocessing | Most-frequent imputation and one-hot encoding inside the model pipeline (no leakage) |
-| Models | Dummy, logistic regression, naive Bayes, decision tree, SVM, random forest, gradient boosting, soft-voting ensemble, stacking ensemble |
-| Comparison | 5-fold × 3 repeated grouped cross-validation on training data; train vs validation AUC to detect overfitting |
-| Selection | Exclude models with train–validation gap > 0.10, keep those within 1 SE of the best, take the simplest; tuning kept only if nested CV improves on untuned |
-| Final test | Test AUC with 95% group-bootstrap CI, confusion matrix, dummy baseline |
-| Statistics | Corrected paired t-tests against logistic regression with Bonferroni adjustment; ensemble error-correlation check |
-| Extras | Permutation importance across folds; fewest questions needed; label-noise test; age-group results; calibration, exploratory risk groups and decision curve; leakage check (ordinary vs grouped split) |
+| Data | Remove exact duplicate rows; the target is `Feeling anxious = Yes` |
+| Preprocessing | Most-frequent imputation and one-hot encoding, learned inside each training fold (no leakage) |
+| Base models | Logistic regression (transparent); random forest (300 trees, depth 4) |
+| Proposed hybrid | CGTH: use the LR probability when \|p − 0.5\| ≥ δ (δ = 0.2), otherwise use the RF probability |
+| Comparators | LR alone, RF alone, soft voting (average of LR and RF) |
+| Validation | 5-fold stratified cross-validation repeated 10 times (50 folds), fixed seed |
+| Metrics | Balanced accuracy (primary), accuracy, sensitivity, specificity, F1, MCC, ROC-AUC, LR coverage |
+| Statistics | Nadeau–Bengio corrected confidence intervals and paired t-tests (non-inferiority vs RF, superiority vs LR) |
+| Explainability | LR odds ratios for the transparent decisions; transparency-vs-performance curve across δ |
+| Robustness | Rerun with duplicates kept, and without the guilt item |
 
 ## Key results
 
-Cross-validation on the training data (mean over 15 folds):
+| Model | Balanced accuracy (95% CI) | ROC-AUC | Decided by LR |
+|---|---|---|---|
+| Logistic regression | 0.730 [0.667, 0.794] | 0.800 | 100% |
+| Random forest | 0.761 [0.706, 0.816] | 0.835 | 0% |
+| Soft voting (LR + RF) | 0.741 [0.678, 0.804] | 0.820 | — |
+| **CGTH (proposed)** | **0.757 [0.700, 0.813]** | 0.809 | **68%** |
 
-| Model | Train AUC | Validation AUC |
-|---|---|---|
-| Dummy | 0.500 | 0.500 |
-| Logistic regression | 0.871 | 0.805 |
-| Naive Bayes | 0.859 | 0.817 |
-| Decision tree | 0.842 | 0.771 |
-| SVM (RBF) | 0.978 | 0.840 |
-| **Random forest (selected)** | 0.938 | 0.842 |
-| Gradient boosting | 0.952 | 0.825 |
-| Soft-voting ensemble | 0.929 | 0.830 |
-| Stacking ensemble | 0.932 | 0.831 |
+Points to report honestly:
+- δ = 0.2 was chosen after an exploratory check of a few values. The full δ curve (notebook Task 12) is reported so the choice is visible.
+- The ROC-AUC of CGTH is lower than RF's, because mixing two models' probabilities blurs the ranking. CGTH is a decision rule, so decision metrics are primary.
+- Gating to a stronger model when uncertain is an existing idea in machine learning. The contribution here is applying a transparent-first version to postpartum survey screening and reporting coverage.
 
-Held-out test set (66 responses, 38 anxious):
-
-| Metric | Random forest | Dummy |
-|---|---|---|
-| ROC-AUC | **0.795** (95% interval 0.67–0.90) | 0.500 |
-| Sensitivity / specificity at 0.5 | 0.84 / 0.71 | 1.00 / 0.00 |
-| Training AUC | 0.930 | — |
-
-Other findings:
-- Ensembles did not beat the best single model; no model differs clearly from logistic regression after the multiple-comparison correction.
-- Tuning did not improve the forest, so default settings were kept.
-- *Feeling of guilt* is the most important question in all 10 folds checked.
-- Six of the nine questions are enough to stay within one standard error of the full set.
-- The forest stays ahead of logistic regression as training labels are corrupted; discrimination is weakest for ages 25–30.
-- The leakage check shows ordinary splits overstating AUC.
-
-Full tables and plots are in the notebook; result tables are saved to `projects/results/`. With only 66 test cases, model rankings from this single split are not reliable.
+All tables and the figure are saved to `projects/results_cgth/`.
 
 ## Scope and claims
 
 | The project does | The project does **not** |
 |---|---|
-| Classify a self-reported anxious-feeling item from other self-reported symptoms | Diagnose postpartum anxiety or depression (no validated EPDS / GAD-7 label) |
-| Benchmark models under leakage-aware validation | Predict *early* or future onset (all items are concurrent, no timing data) |
-| Produce exploratory model-based tiers | Provide clinically validated risk categories |
-| Report attributions as model reliance | Make causal claims |
+| Predict a self-reported anxious-feeling item from other self-reported items | Diagnose postpartum anxiety or depression (no validated EPDS / GAD-7 label) |
+| Test a simple, explainable hybrid under leakage-free validation | Predict *early* or future onset (all items are concurrent; there is no timing data) |
+| Report how many decisions a transparent model can make | Provide clinically validated risk categories |
+| Report odds ratios as associations | Make causal claims |
 
-Other limits: unknown data origin, small test set, no external validation, repeated rows may reflect copied data.
+Other limits: unknown data origin, small sample (326 unique rows), no external validation, and the duplicated rows may reflect copied data.
 
 ## Repository structure
 
@@ -97,46 +82,48 @@ Other limits: unknown data origin, small test set, no external validation, repea
 research-projects/
 ├── README.md                       # this file
 ├── projects/
-│   ├── main-projects-final.ipynb   # ★ complete, step-by-step analysis (run this)
+│   ├── cgth_hybrid_study.ipynb     # ★ main study, one task per cell (run this)
+│   ├── results_cgth/               # tables and figure written by the notebook
 │   ├── main-projects.ipynb         # original notebook (kept unchanged)
-│   ├── c_project.ipynb             # earlier extended experiment (kept unchanged)
+│   ├── c_project.ipynb             # earlier experiments (kept unchanged)
+│   ├── 1-project.ipynb, 2-project.ipynb
 │   └── post natal data.csv         # dataset (two identical copies also present)
-└── research_blueprint/             # research plan: audit, literature matrix,
-                                    # hypotheses, methodology, evaluation, XAI,
-                                    # ethics, thesis outline (start at its README.md)
+└── research_blueprint/             # research plan: audit, literature, hypotheses,
+                                    # methodology, thesis outline (start at its README.md)
 ```
 
-`research_blueprint/` contains the research planning documents: a verified literature matrix (20 sources with verification status), gap analysis, hypotheses with statistical tests, ablation design, thesis chapter outline and a reviewer-objection checklist. Items marked unverified there must be checked before citing.
+`research_blueprint/09_cgth_hybrid_methodology.md` describes the proposed method in detail. The literature table in `03_literature_review_and_gaps.md` marks entries with incomplete metadata (⚠); check those before citing.
 
 ## Reproducing the results
 
-Tested with Python 3.11 and pandas 3.1.0, NumPy 2.4.6, scikit-learn 1.9.1, SciPy 1.17.1, matplotlib 3.11.2.
+Tested with Python 3.11, NumPy 2.4.6, pandas 3.1.0 and scikit-learn 1.9.1 (SciPy and matplotlib also required).
 
 ```bash
 cd projects
 python -m venv .venv && source .venv/bin/activate
 pip install pandas numpy scikit-learn scipy matplotlib jupyter
-jupyter lab main-projects-final.ipynb     # Run All (about 3 minutes)
+jupyter lab cgth_hybrid_study.ipynb     # Run All
 ```
 
-All random seeds are fixed (`SEED = 42`). Different library versions can change numbers slightly.
+All random seeds are fixed (`SEED = 42`). Different library versions can change the numbers slightly.
 
 ## Roadmap
 
-- [ ] Resolve dataset provenance and licence (contact the uploader or source hospital)
-- [ ] Systematic literature search (PRISMA) and verification of every citation
-- [x] Fewest questions needed, label noise, age groups, decision curve, permutation importance across folds
-- [ ] SHAP explanations and a formal explanation-stability analysis (removed from the notebook to keep the code simple)
-- [ ] Add XGBoost / CatBoost comparison (not installed in this environment)
-- [ ] Weighted voting and a locked second hold-out
-- [ ] Seek a second dataset for external validation
+- [x] Data audit and leakage check
+- [x] Proposed hybrid (CGTH) with hypothesis tests and robustness checks
+- [ ] Choose δ inside each training fold (removes the exploratory-selection concern)
+- [ ] Performance by age band (the only fairness check this data allows)
+- [ ] Resolve dataset provenance and licence
+- [ ] Verify every citation marked ⚠ in the literature table
+- [ ] Seek a second dataset with a validated label (e.g. EPDS) for external validation
 - [ ] Ethics declaration for secondary data use
 
 ## Data, ethics and citation
 
-The data contain sensitive self-reported mental-health items, including a suicide-related question whose prevalence is implausibly high; treat it with care and never present it as a clinical prevalence. The model is not for individual clinical use. The dataset licence is unverified, so check Kaggle's terms before redistributing the CSV.
+The data contain sensitive self-reported mental-health items, including a suicide-related question. Never present its rates as clinical prevalence. The model is not for individual clinical use. The dataset licence is unverified, so check Kaggle's terms before redistributing the CSV.
 
 ```
-Author (2026). Symptom-Based Screening for Postpartum Anxiety: A Leakage-Aware Comparison
-of Machine-Learning Models. Unpublished thesis project. GitHub repository: research-projects.
+Author (2026). A Confidence-Gated Transparent Hybrid of Logistic Regression and Random Forest
+for Explainable Screening Support of Self-Reported Postpartum Anxiety Symptoms.
+Unpublished thesis project. GitHub repository: research-projects.
 ```

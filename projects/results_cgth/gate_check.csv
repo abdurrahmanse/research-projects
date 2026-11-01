@@ -1,0 +1,4 @@
+,mean_accuracy
+LR on confident cases,0.806
+LR on uncertain cases,0.606
+RF on uncertain cases,0.709

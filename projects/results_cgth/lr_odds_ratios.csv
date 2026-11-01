@@ -1,0 +1,11 @@
+answer,odds_ratio,effect
+Feeling of guilt_Yes,0.226,lowers probability
+Feeling of guilt_No,3.163,raises probability
+Problems concentrating or making decision_Often,1.846,raises probability
+Irritable towards baby & partner_Sometimes,0.572,lowers probability
+Suicide attempt_Not interested to say,0.581,lowers probability
+Age_45-50,1.671,raises probability
+Overeating or loss of appetite_Yes,0.639,lowers probability
+Problems concentrating or making decision_No,0.646,lowers probability
+Irritable towards baby & partner_Yes,1.536,raises probability
+Overeating or loss of appetite_No,1.449,raises probability
