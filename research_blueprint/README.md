@@ -2,7 +2,7 @@
 
 **Title:** Interpretable Postpartum Anxiety Symptom Screening Using Confidence-Gated Hybrid Machine Learning
 
-**Main notebook:** `projects/cgth_hybrid_study.ipynb` (18 tasks, one per cell; the dataset is only read). Outputs go to `projects/results_cgth/`.
+**Main notebook:** `projects/cgth_hybrid_study.ipynb` (22 tasks, one per cell; the dataset is only read). Outputs go to `projects/results_cgth/`.
 
 **Method in one sentence:** logistic regression decides every case it is confident about (|p − 0.5| ≥ 0.2); only uncertain cases go to a random forest.
 
@@ -27,4 +27,4 @@
 | Soft Voting (LR + RF) | 0.741 [0.678, 0.804] | 0.820 | — |
 | **CGTH (proposed)** | **0.757 [0.700, 0.813]** | 0.809 | **68%** |
 
-H1 (non-inferior to RF) supported; H2 (better than LR) not supported (p = 0.08).
+H1 (non-inferior to RF): supported at fixed δ = 0.2, not established with δ chosen inside training folds (0.750, 77% decided by LR, p = 0.06). H2 (better than LR): not supported (p = 0.08).

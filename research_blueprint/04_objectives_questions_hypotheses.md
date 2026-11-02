@@ -25,4 +25,4 @@ In mental-health screening, simple models are easy to explain but less accurate,
 Primary metric: **balanced accuracy**, because CGTH is a yes/no decision rule and the classes are 58/42. ROC-AUC is reported as a secondary metric.
 
 ## First-run answers
-H1 supported (−0.005, p < 0.001). H2 not supported (+0.026, p = 0.08). Coverage 68%. Gate check: LR 0.81 on confident cases, 0.61 on uncertain ones; RF 0.71 on uncertain ones. Duplicates kept: 0.84–0.86. Without guilt: about 0.60 for all models.
+H1 supported at fixed δ = 0.2 (−0.005, p < 0.001) but not established with δ chosen inside training folds (−0.011, p = 0.06, Task 19). H2 not supported (+0.026, p = 0.08; stricter version +0.020, p = 0.13). Coverage 68%. Gate check: LR 0.81 on confident cases, 0.61 on uncertain ones; RF 0.71 on uncertain ones. Duplicates kept: 0.84–0.86. Without guilt: about 0.60 for all models.

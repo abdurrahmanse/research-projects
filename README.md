@@ -10,14 +10,14 @@
 
 Simple models are easy to explain but often less accurate. Complex models are more accurate but harder to explain. This project proposes a small hybrid, the **Confidence-Gated Transparent Hybrid (CGTH)**. A logistic regression makes every decision it is confident about, and only uncertain cases (predicted probability close to 0.5) are passed to a random forest. The task is to predict a self-reported *Feeling anxious* item from eight other survey items in a public Kaggle dataset of postpartum responses.
 
-On 326 distinct responses, evaluated with 5-fold cross-validation repeated 10 times, CGTH reached a **balanced accuracy of 0.757 (95% CI 0.700–0.813)**. That is statistically non-inferior to the random forest (0.761), while **68% of decisions were made by the transparent logistic regression**. CGTH was not significantly better than logistic regression alone (0.730, p = 0.08). The dataset has serious limitations (78% duplicate rows, a single-item label, heavy reliance on one question), so the results are methodological and exploratory. This is not a clinical tool.
+On 326 distinct responses, evaluated with 5-fold cross-validation repeated 10 times, CGTH reached a **balanced accuracy of 0.757 (95% CI 0.700–0.813)**. That is statistically non-inferior to the random forest (0.761), while **68% of decisions were made by the transparent logistic regression**. CGTH was not significantly better than logistic regression alone (0.730, p = 0.08). When δ was chosen inside each training fold, the stricter version reached 0.750 (0.687–0.813) with 77% of decisions made by logistic regression, but non-inferiority to the random forest was not established (p = 0.06). The dataset has serious limitations (78% duplicate rows, a single-item label, heavy reliance on one question), so the results are methodological and exploratory. This is not a clinical tool.
 
 ## Research questions and hypotheses
 
 | | Question | Result |
 |---|---|---|
-| H1 | Is CGTH non-inferior to random forest (margin 0.03 balanced accuracy)? | **Supported** (difference −0.005, one-sided p < 0.001) |
-| H2 | Is CGTH better than logistic regression? | Not supported (+0.026, p = 0.08) |
+| H1 | Is CGTH non-inferior to random forest (margin 0.03 balanced accuracy)? | Supported at fixed δ = 0.2 (−0.005, p < 0.001); **not established with δ chosen inside training folds** (−0.011, p = 0.06) |
+| H2 | Is CGTH better than logistic regression? | Not supported (+0.026, p = 0.08; stricter version +0.020, p = 0.13) |
 | RQ3 | Why does the gate work? | LR is 81% accurate on confident cases but 61% on uncertain ones; RF reaches 71% on the uncertain ones |
 | RQ4 | How much do duplicate rows inflate results? | Balanced accuracy rises from about 0.76 to 0.84–0.86 when duplicates are kept |
 | RQ5 | How much do models rely on one question? | Without *Feeling of guilt*, every model drops to about 0.60 |
@@ -58,7 +58,7 @@ The three CSV files in `projects/` are byte-identical copies of the same dataset
 | Soft voting (LR + RF) | 0.741 [0.678, 0.804] | 0.820 | — |
 | **CGTH (proposed)** | **0.757 [0.700, 0.813]** | 0.809 | **68%** |
 
-**Stricter version (Task 17):** with δ chosen inside each training fold, CGTH reaches balanced accuracy 0.750 [0.687, 0.813] with **77% of decisions made by LR**. The chosen δ was mostly 0.10–0.20, which supports δ = 0.2 as a reasonable default.
+**Stricter version (Task 17):** with δ chosen inside each training fold, CGTH reaches balanced accuracy 0.750 [0.687, 0.813] with **77% of decisions made by LR**. The chosen δ was mostly 0.10–0.20, which supports δ = 0.2 as a reasonable default. However, the formal test (Task 19) no longer establishes non-inferiority to random forest at the 0.03 margin (difference −0.011, p = 0.06).
 
 **Screening operating point (Task 18):** with the threshold chosen on training data to catch 90% of anxious answers:
 
@@ -70,9 +70,23 @@ The three CSV files in `projects/` are byte-identical copies of the same dataset
 
 At 90% sensitivity, random forest gives the fewest false alarms; CGTH sits close to LR.
 
+**Results by age band (Task 20, CGTH at δ = 0.2):**
+
+| Age band | Unique rows | Balanced accuracy | Sensitivity | Specificity |
+|---|---|---|---|---|
+| 25–30 | 49 | 0.664 | 0.748 | 0.581 |
+| 30–35 | 71 | 0.824 | 0.967 | 0.681 |
+| 35–40 | 76 | 0.760 | 0.826 | 0.693 |
+| 40–45 | 73 | 0.755 | 0.878 | 0.633 |
+| 45–50 | 57 | 0.726 | 0.927 | 0.525 |
+
+Performance is weakest for the youngest band. Each band is small, so treat these differences as descriptive.
+
+**Training vs testing (Task 21):** CGTH balanced accuracy 0.792 vs 0.757 (gap 0.036), ROC-AUC 0.881 vs 0.809 (gap 0.071). The other models show similar gaps, so overfitting is mild.
+
 Points to report honestly:
-- The main δ = 0.2 was chosen after an exploratory check; Task 17 confirms the result when δ is chosen inside each training fold.
-- Tested alternatives (tuned RF, Extra Trees, SVM, gradient boosting, naive Bayes, k-NN, class balancing) all reached 0.69–0.77 balanced accuracy. About 0.76 is the ceiling for this dataset without leakage.
+- The main δ = 0.2 was chosen after an exploratory check. With δ chosen inside each training fold (Tasks 17, 19), the difference from RF grows to −0.011 and non-inferiority is no longer significant (p = 0.06). Treat H1 as suggestive, not proven.
+- Tested alternatives (Task 22: tuned RF, Extra Trees, SVM, gradient boosting, naive Bayes, k-NN, LR) reached 0.69–0.76 balanced accuracy; class balancing in an exploratory run reached at most 0.765. About 0.76 is the ceiling for this dataset without leakage.
 - The ROC-AUC of CGTH is lower than RF's, because mixing two models' probabilities blurs the ranking. CGTH is a decision rule, so decision metrics are primary.
 - Gating to a stronger model when uncertain is an existing idea in machine learning. The contribution here is applying a transparent-first version to postpartum survey screening and reporting coverage.
 
@@ -109,7 +123,7 @@ research-projects/
 
 ## Reproducing the results
 
-Tested with Python 3.11, NumPy 2.4.6, pandas 3.1.0 and scikit-learn 1.9.1 (SciPy and matplotlib also required).
+Tested with Python 3.11, NumPy 2.4.6, pandas 3.1.0, SciPy 1.17.1, scikit-learn 1.9.1 and matplotlib 3.11.2 (also saved to `results_cgth/library_versions.txt`).
 
 ```bash
 cd projects
@@ -126,7 +140,8 @@ All random seeds are fixed (`SEED = 42`). Different library versions can change 
 - [x] Proposed hybrid (CGTH) with hypothesis tests and robustness checks
 - [x] Choose δ inside each training fold (Task 17)
 - [x] Screening threshold at 90% sensitivity (Task 18)
-- [ ] Performance by age band (the only fairness check this data allows)
+- [x] Performance by age band (Task 20)
+- [x] Training vs testing check and performance ceiling (Tasks 21–22)
 - [ ] Resolve dataset provenance and licence
 - [ ] Verify every citation marked ⚠ in the literature table
 - [ ] Seek a second dataset with a validated label (e.g. EPDS) for external validation

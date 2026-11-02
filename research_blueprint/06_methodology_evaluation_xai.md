@@ -32,6 +32,13 @@ Balanced accuracy (primary), accuracy, sensitivity, specificity, F1, MCC, ROC-AU
 ## Robustness (Task 15)
 The whole experiment is rerun (a) with duplicates kept and (b) without the guilt item.
 
+## Added analyses (Tasks 16–22)
+- **Task 16–17, 19:** δ chosen inside each training fold, with the same hypothesis tests.
+- **Task 18:** threshold chosen on training data for 90% sensitivity.
+- **Task 20:** results by age band.
+- **Task 21:** training vs testing gaps.
+- **Task 22:** seven other model types, tuned with an inner 3-fold grid search (15 outer folds).
+
 ## Figures and tables for the thesis
 | Item | Content | Task |
 |---|---|---|

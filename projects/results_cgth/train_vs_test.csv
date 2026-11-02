@@ -1,0 +1,5 @@
+model,balanced_accuracy_train,balanced_accuracy_test,roc_auc_train,roc_auc_test,balanced_accuracy_gap,roc_auc_gap
+Logistic Regression,0.776,0.73,0.859,0.8,0.045,0.059
+Random Forest,0.796,0.761,0.934,0.835,0.035,0.099
+Soft Voting (LR+RF),0.791,0.741,0.896,0.82,0.05,0.076
+CGTH (proposed),0.792,0.757,0.881,0.809,0.036,0.071

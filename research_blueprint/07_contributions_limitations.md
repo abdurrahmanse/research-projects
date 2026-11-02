@@ -5,7 +5,7 @@
 | # | Contribution | Evidence (notebook task) |
 |---|---|---|
 | C1 | **CGTH**: a confidence-gated hybrid in which a transparent model decides confident cases and a random forest handles uncertain ones | Tasks 7, 9 |
-| C2 | Evidence that CGTH is non-inferior to random forest while 68% of decisions stay with logistic regression | Tasks 10–11 |
+| C2 | Evidence on whether CGTH keeps random forest's accuracy while most decisions stay with logistic regression: supported at δ = 0.2 (68% of decisions), not established with δ chosen in training folds (77%, p = 0.06) | Tasks 10–11, 17, 19 |
 | C3 | **Coverage** reported next to accuracy, plus a transparency–performance curve across δ | Task 12 |
 | C4 | An explanation of why the gate works (LR accuracy on confident vs uncertain cases) | Task 13 |
 | C5 | A data-quality audit of a public postpartum survey dataset: 78% duplicates, leakage inflation, single-item dependence | Tasks 4, 15 |
@@ -22,13 +22,13 @@ Low on its own. The output predicts whether a respondent answers Yes to an anxie
 - Cross-sectional data: early screening cannot be tested.
 - Provenance unclear; the data may be replicated or synthetic.
 - n = 326 gives wide confidence intervals.
-- δ = 0.2 was chosen after an exploratory look at a few values; the full δ curve is reported to offset this.
+- δ = 0.2 was chosen after an exploratory look at a few values. With δ chosen inside training folds, non-inferiority to RF is no longer significant (p = 0.06).
 - CGTH has lower ROC-AUC than RF (0.809 vs 0.835) because of the probability mixing.
 - Hyperparameters were fixed, not tuned.
 - No external validation.
 
 ## Fairness
-Age band is the only demographic variable. Report balanced accuracy per age band as a descriptive check (each band has about 40–75 unique rows). This is not yet in the notebook; see the roadmap.
+Age band is the only demographic variable. Task 20 reports results per age band: balanced accuracy ranges from 0.664 (25–30) to 0.824 (30–35). Bands have only 49–76 unique rows, so this is a descriptive check, not proof of bias.
 
 ## Publication potential
 - **Thesis or student project:** strong, if the limitations above are written clearly.

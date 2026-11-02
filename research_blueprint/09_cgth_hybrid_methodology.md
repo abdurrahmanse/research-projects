@@ -27,18 +27,20 @@ Model cascades and "defer when uncertain" designs already exist in machine learn
 | Soft Voting (LR + RF) | 0.741 [0.678, 0.804] | 0.820 | — |
 | **CGTH, δ = 0.2** | **0.757 [0.700, 0.813]** | 0.809 | **68 %** |
 
-- **H1 supported:** −0.005 vs RF, one-sided p < 0.001.
+- **H1 at fixed δ = 0.2: supported** (−0.005 vs RF, one-sided p < 0.001). This δ was chosen after an exploratory check, so read it with the stricter test below.
 - **H2 not supported:** +0.026 vs LR, p = 0.08. Report this as "no significant evidence".
 - **Why the gate works:** LR accuracy is 0.81 on confident cases vs 0.61 on uncertain ones; RF reaches 0.71 on the uncertain ones.
 - **Leakage:** keeping duplicates inflates balanced accuracy to 0.84–0.86 for every model.
 - **Guilt dependence:** without the guilt item, every model falls to about 0.60.
 
-## Added results (Tasks 16–18)
-- **δ chosen inside each training fold (Task 17):** balanced accuracy 0.750 [0.687, 0.813], LR coverage 77%. The chosen δ ranged 0–0.30, mostly 0.10–0.20.
+## Added results (Tasks 16–22)
+- **δ chosen inside each training fold (Tasks 17, 19):** balanced accuracy 0.750 [0.687, 0.813], LR coverage 77%. The chosen δ ranged 0–0.30, mostly 0.10–0.20. **Non-inferiority to RF is not established** (−0.011, p = 0.06), and superiority to LR is not supported (+0.020, p = 0.13).
 - **Screening at 90% sensitivity (Task 18):** specificity LR 0.496, RF 0.558, CGTH 0.509. At this operating point RF gives the fewest false alarms.
-- **Performance ceiling:** tuned RF, Extra Trees, SVM, HistGradientBoosting, categorical naive Bayes, k-NN and class balancing all reached 0.69–0.77 balanced accuracy (exploratory runs, not in the notebook). About 0.76 is the ceiling for this dataset without leakage.
+- **Performance ceiling:** tuned RF, Extra Trees, SVM, HistGradientBoosting, categorical naive Bayes, k-NN and class balancing all reached 0.69–0.77 balanced accuracy (Task 22 for the tuned models; class balancing was an exploratory run). About 0.76 is the ceiling for this dataset without leakage.
+- **By age band (Task 20):** balanced accuracy 0.664 (25–30), 0.824 (30–35), 0.760 (35–40), 0.755 (40–45), 0.726 (45–50); bands have 49–76 unique rows, so these are descriptive.
+- **Training vs testing (Task 21):** CGTH balanced accuracy 0.792 vs 0.757 (gap 0.036).
 
 ## Limitations to state in the thesis
-- The main δ = 0.2 was chosen after an exploratory check of δ = 0.1, 0.2 and 0.3. Task 17 addresses this by choosing δ inside each training fold, and the full δ curve (Task 12) is reported.
+- The main δ = 0.2 was chosen after an exploratory check of δ = 0.1, 0.2 and 0.3. Choosing δ inside each training fold (Tasks 17, 19) weakens H1 to p = 0.06, so report H1 as suggestive, not proven. The full δ curve (Task 12) is also reported.
 - ROC-AUC of CGTH (0.809) is lower than RF (0.835), because mixing two models' probabilities blurs the ranking. CGTH is a decision rule, so decision metrics are primary; AUC is still reported.
 - The data limitations in doc 01 still apply: a single self-reported item as the label, 78 % duplicates, and an implausible guilt association.

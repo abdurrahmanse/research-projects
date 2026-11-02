@@ -29,7 +29,7 @@
 2. **It is testable** with two pre-stated hypotheses (non-inferior to RF, better than LR) and one extra measure, coverage: the share of decisions made by the transparent model.
 3. **It fits the data.** LR is reliable when confident (0.81 accuracy) and weak near 0.5 (0.61), where RF does better (0.71). The gate exploits exactly this pattern.
 4. **It keeps the audit findings** (duplicates, guilt dependence) as robustness checks instead of hiding them.
-5. **It is small:** 2 base models, 1 comparator hybrid, 18 notebook tasks.
+5. **It is small:** 2 base models, 1 comparator hybrid, 22 notebook tasks.
 
 T2 and T3 are kept as background: their findings appear in the thesis as the data-audit chapter.
 
