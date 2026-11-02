@@ -115,7 +115,7 @@ Other limits: unknown data origin, small sample (326 unique rows), no external v
 ├── results/                           # tables and figures written by the notebook
 ├── research_plan/                     # audit, literature, hypotheses, methodology,
 │                                      # thesis outline (start at its README.md)
-├── reports/                           # PDF summary reports
+├── reports/                           # Updated Bengali PDF and build script
 └── archive/                           # earlier experiments, kept unchanged
     ├── stage1_baseline.ipynb          # was 1-project
     ├── stage2_ensembles.ipynb         # was 2-project
@@ -137,6 +137,21 @@ cd notebooks && jupyter lab 01_cgth_hybrid_study.ipynb     # Run All
 ```
 
 All random seeds are fixed (`SEED = 42`). Different library versions can change the numbers slightly.
+
+## Building the Bengali project report
+
+The complete A-to-Z report is `reports/CGTH_Project_Report_bn.pdf`. To regenerate it after changing the report content, run:
+
+```bash
+python reports/build_report.py
+"/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" \
+  --headless --disable-gpu --no-sandbox \
+  --print-to-pdf=reports/CGTH_Project_Report_bn.pdf \
+  --print-to-pdf-no-header "file://$(pwd)/reports/CGTH_Project_Report_bn.html"
+rm reports/CGTH_Project_Report_bn.html
+```
+
+The renderer uses the installed Hind Siliguri Bengali font so conjuncts and Bengali shaping remain readable in the PDF.
 
 ## Roadmap
 
