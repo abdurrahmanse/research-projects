@@ -1,6 +1,6 @@
 # 01 — Audit of the Existing Project and Dataset
 
-Scope: `projects/main-projects.ipynb` (22 cells), `projects/post natal data.csv`, saved figures. No existing file was modified.
+Scope: `archive/benchmark_original.ipynb` (22 cells), `data/raw/postpartum_depression.csv`, saved figures. No existing file was modified.
 
 > **Provenance of numbers.** Every figure marked ◆ was computed during this audit with a throw-away script (scikit-learn, fixed seeds) on the CSV as-is. They are *exploratory audit evidence*, not thesis results. Re-derive them in your own seeded, versioned pipeline before citing them.
 

@@ -1,9 +1,9 @@
 # 06 — Experimental Methodology, Evaluation and Explainability
 
-Everything below is implemented in `projects/cgth_hybrid_study.ipynb`; task numbers refer to its cells.
+Everything below is implemented in `notebooks/01_cgth_hybrid_study.ipynb`; task numbers refer to its cells.
 
 ## Pipeline (leakage-free)
-1. Load `post natal data.csv` read-only. Drop `Timestamp`. Remove exact duplicate rows before any split (Tasks 3–5).
+1. Load `data/raw/postpartum_depression.csv` read-only. Drop `Timestamp`. Remove exact duplicate rows before any split (Tasks 3–5).
 2. Target: `Feeling anxious` = Yes → 1.
 3. Most-frequent imputation and one-hot encoding are fitted inside each training fold only (Task 6).
 4. Settings are fixed before the run (Task 2): seed 42, δ = 0.2, non-inferiority margin 0.03, δ grid 0–0.5.

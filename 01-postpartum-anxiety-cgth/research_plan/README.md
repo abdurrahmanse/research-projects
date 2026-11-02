@@ -2,7 +2,7 @@
 
 **Title:** Interpretable Postpartum Anxiety Symptom Screening Using Confidence-Gated Hybrid Machine Learning
 
-**Main notebook:** `projects/cgth_hybrid_study.ipynb` (22 tasks, one per cell; the dataset is only read). Outputs go to `projects/results_cgth/`.
+**Main notebook:** `notebooks/01_cgth_hybrid_study.ipynb` (22 tasks, one per cell; the dataset is only read). Outputs go to `results/`.
 
 **Method in one sentence:** logistic regression decides every case it is confident about (|p − 0.5| ≥ 0.2); only uncertain cases go to a random forest.
 

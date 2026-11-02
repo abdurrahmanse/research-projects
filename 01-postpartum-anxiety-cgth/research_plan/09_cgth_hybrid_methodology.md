@@ -1,6 +1,6 @@
 # 09 — Proposed Method: Confidence-Gated Transparent Hybrid (CGTH)
 
-Notebook: `projects/cgth_hybrid_study.ipynb`. This replaces the larger benchmark design in docs 05–06 as the main study; those docs remain as background.
+Notebook: `notebooks/01_cgth_hybrid_study.ipynb`. This replaces the larger benchmark design in docs 05–06 as the main study; those docs remain as background.
 
 ## Idea
 1. Logistic Regression (LR) is fully transparent: each decision can be explained by its odds ratios.
