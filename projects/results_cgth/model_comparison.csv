@@ -1,0 +1,13 @@
+model,balanced_accuracy,accuracy,sensitivity,specificity,f1,roc_auc,test_folds
+Random Forest,76.1,78.0,88.1,64.2,82.3,83.5,50
+Random Forest (tuned),76.0,77.3,,,,84.0,15
+CGTH (proposed),75.7,77.6,87.8,63.5,82.0,80.9,50
+Extra Trees (tuned),75.5,76.6,,,,84.2,15
+CGTH (δ in fold),75.0,76.8,86.5,63.5,81.2,80.6,50
+SVM (tuned),74.8,76.2,,,,81.0,15
+Soft Voting (LR+RF),74.1,76.0,85.7,62.6,80.5,82.0,50
+Gradient Boosting (tuned),73.4,75.1,,,,80.9,15
+Categorical Naive Bayes,73.3,74.9,,,,81.5,15
+Logistic Regression (tuned),73.2,74.9,,,,80.5,15
+Logistic Regression,73.0,74.5,82.1,63.9,78.8,80.0,50
+k-Nearest Neighbours (tuned),69.2,71.1,,,,77.2,15
