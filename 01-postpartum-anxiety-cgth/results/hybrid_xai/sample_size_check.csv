@@ -1,0 +1,3 @@
+,shrinkage criterion,optimism criterion,overall-risk criterion,rows needed,rows available,enough?
+Conservative R2 (15% of maximum),1512.0,497.0,374.0,1512.0,326,No
+R2 from the fitted model (0.34),422.0,429.0,374.0,429.0,326,No

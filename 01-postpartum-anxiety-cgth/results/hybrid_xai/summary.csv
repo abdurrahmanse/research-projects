@@ -1,0 +1,13 @@
+result,value
+Best model overall (average rank),HE: Hybrid Ensemble (proposed)
+Best single model,Random Forest
+HE test balanced accuracy (%),77.2
+HE test ROC-AUC (%),84.3
+CG-HE test balanced accuracy (%),75.9
+CG-HE test ROC-AUC (%),81.2
+"CG-HE train-test gap, balanced accuracy (points)",9.1
+CG-HE decisions made by Logistic Regression (%),68.4
+Any hybrid significantly different from any model?,No
+Most important question (SHAP),Guilt
+Most important question (LIME),Guilt
+SHAP-LIME global rank agreement (Spearman),0.983

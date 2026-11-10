@@ -1,0 +1,19 @@
+hybrid,compared_with,difference,p,p_holm,significant
+HE: Hybrid Ensemble (proposed),Logistic Regression,0.0418,0.0383,0.6504,False
+HE: Hybrid Ensemble (proposed),Naive Bayes,0.04,0.0609,0.9742,False
+HE: Hybrid Ensemble (proposed),Gradient Boosting,0.0355,0.0116,0.2093,False
+HE: Hybrid Ensemble (proposed),"CGTH (LR→RF, notebook 01)",0.0146,0.1795,1.0,False
+HE: Hybrid Ensemble (proposed),CG-HE: Gated Hybrid (proposed),0.013,0.1339,1.0,False
+HE: Hybrid Ensemble (proposed),Extra Trees,0.0119,0.2761,1.0,False
+HE: Hybrid Ensemble (proposed),Stacking (RF+ET+NB),0.0062,0.4262,1.0,False
+HE: Hybrid Ensemble (proposed),SVM,0.0053,0.4692,1.0,False
+HE: Hybrid Ensemble (proposed),Random Forest,0.0012,0.8785,1.0,False
+CG-HE: Gated Hybrid (proposed),Logistic Regression,0.0288,0.0953,1.0,False
+CG-HE: Gated Hybrid (proposed),Naive Bayes,0.027,0.1389,1.0,False
+CG-HE: Gated Hybrid (proposed),Gradient Boosting,0.0225,0.1202,1.0,False
+CG-HE: Gated Hybrid (proposed),"CGTH (LR→RF, notebook 01)",0.0017,0.8253,1.0,False
+CG-HE: Gated Hybrid (proposed),Extra Trees,-0.0011,0.9405,1.0,False
+CG-HE: Gated Hybrid (proposed),Stacking (RF+ET+NB),-0.0068,0.4849,1.0,False
+CG-HE: Gated Hybrid (proposed),SVM,-0.0077,0.4068,1.0,False
+CG-HE: Gated Hybrid (proposed),Random Forest,-0.0117,0.3149,1.0,False
+CG-HE: Gated Hybrid (proposed),HE: Hybrid Ensemble (proposed),-0.013,0.1339,1.0,False

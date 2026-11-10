@@ -1,0 +1,9 @@
+study,data,outcome,reported result
+"Zhang et al. 2020, JMIR Med Inform","Chinese cohort, 508 women",PPD,AUC 0.78
+"Amit et al. 2021, BMC Pregnancy Childbirth","UK EHR, 266,544 women",PPD diagnosis/treatment,AUC 0.72-0.74
+"Saqib et al. 2021, scoping review",14 studies,PPD,AUC 0.78-0.93
+"Huang et al. 2025, Front Med",Clinical cohort,PPD,AUC 0.955 (10-fold CV)
+Adhikari & Karki 2026,"Bangladesh, 800 women",3 EPDS risk tiers,"Accuracy 76.5-77.4%, AUC 0.91-0.92"
+"Nayee et al. 2026, ICSUMMIT","Kaggle, 1,503 entries (likely this dataset)",Not stated,Accuracy 96.99% (see Task 30)
+This study: HE,"Kaggle survey, 326 unique rows",Self-reported anxiety item,"Balanced accuracy 77.2%, AUC 0.843"
+This study: CG-HE,"Kaggle survey, 326 unique rows",Self-reported anxiety item,"Balanced accuracy 75.9%, AUC 0.812"

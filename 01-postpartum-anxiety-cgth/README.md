@@ -92,6 +92,28 @@ Points to report honestly:
 
 All tables and the figures are saved to `results/`.
 
+### Notebook 02: hybrid models and explainable AI
+
+`notebooks/02_hybrid_xai_study.ipynb` compares 10 models on the same 50 folds (seed 42). The two hybrid designs were chosen beforehand on separate development runs (seeds 7 and 2026).
+
+| Model | Test balanced accuracy | Test ROC-AUC | Train balanced accuracy |
+|---|---|---|---|
+| **HE: Hybrid Ensemble (RF + ET + SVM soft voting)** | **77.2%** | 84.3% | 87.4% |
+| Random Forest | 77.1% | 84.3% | 84.6% |
+| SVM | 76.7% | 82.2% | 86.2% |
+| Stacking (RF + ET + NB) | 76.6% | 84.3% | 85.9% |
+| Extra Trees | 76.0% | 84.8% | 93.1% |
+| **CG-HE: Gated Hybrid (LR gate → HE)** | 75.9% | 81.2% | 85.0% |
+| Logistic Regression | 73.0% | 80.0% | 77.6% |
+
+HE ranks first on balanced accuracy and ROC-AUC together, but no model differs significantly from another after Holm correction. CG-HE lets Logistic Regression make 68% of decisions.
+
+**SHAP vs LIME (CG-HE, 66 hold-out respondents):** both rank *Feeling of guilt* first (about 40% of total importance) and agree on the top three questions; global rank agreement is Spearman 0.98, per-person agreement 0.87. SHAP (exact) was slightly more stable across reruns (0.92 vs 0.91); LIME was about 5 times faster per person (0.08 s vs 0.42 s). Results are saved to `results/hybrid_xai/`.
+
+**Prior study on this dataset (Task 30):** Nayee et al. (ICSUMMIT 2026) report 96.99% accuracy on a 1,503-entry Kaggle dataset, very likely this one, with no duplicate removal mentioned. A Random Forest with RFE on the raw 1,503 rows reproduces 96.2% (20 splits, range 94.4–98.0%), because about 96% of test rows are exact copies of training rows. On the 326 unique rows, the same method gives 74.2%. The published figure is therefore very likely inflated by duplicate leakage.
+
+**Sample size (Task 31):** Riley et al. (2020) criteria call for 429–1,512 rows for a stable 20-parameter model; this study has 326 unique rows. Results should be read as exploratory until confirmed on a larger dataset.
+
 ## Scope and claims
 
 | The project does | The project does **not** |
@@ -111,7 +133,8 @@ Other limits: unknown data origin, small sample (326 unique rows), no external v
 ├── requirements.txt                   # pinned library versions
 ├── data/raw/postpartum_depression.csv # dataset (read-only)
 ├── notebooks/
-│   └── 01_cgth_hybrid_study.ipynb     # ★ main study, one task per cell (run this)
+│   ├── 01_cgth_hybrid_study.ipynb     # CGTH study, one task per cell
+│   └── 02_hybrid_xai_study.ipynb      # ★ hybrid models, all-model comparison, SHAP vs LIME
 ├── results/                           # tables and figures written by the notebook
 ├── research_plan/                     # audit, literature, hypotheses, methodology,
 │                                      # thesis outline (start at its README.md)
@@ -162,7 +185,11 @@ The renderer uses the installed Hind Siliguri Bengali font so conjuncts and Beng
 - [x] Performance by age band (Task 20)
 - [x] Training vs testing check and performance ceiling (Tasks 21–22)
 - [ ] Resolve dataset provenance and licence
-- [ ] Verify every citation marked ⚠ in the literature table
+- [x] Verify citations marked ⚠ (5 of 7 resolved; Zhang 2021 page numbers and one author order remain)
+- [x] Replicate the prior 97% result on this dataset (notebook 02, Task 30)
+- [x] Sample-size justification (notebook 02, Task 31)
+- [x] TRIPOD+AI checklist draft (`research_plan/10_tripod_ai_checklist.md`)
+- [ ] Calibration curves for the two proposed hybrids
 - [ ] Seek a second dataset with a validated label (e.g. EPDS) for external validation
 - [ ] Ethics declaration for secondary data use
 

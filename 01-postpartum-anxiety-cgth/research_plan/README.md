@@ -17,6 +17,7 @@
 | 07_contributions_limitations.md | Contributions, limitations, fairness, publication potential |
 | 08_thesis_outline_roadmap_reviewers.md | Chapters, timeline, reviewer responses |
 | 09_cgth_hybrid_methodology.md | One-page summary of the method and first-run results |
+| 10_tripod_ai_checklist.md | TRIPOD+AI reporting checklist draft with status of each item |
 
 ## First-run results (seed 42, 50 folds, 326 unique rows)
 

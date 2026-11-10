@@ -1,0 +1,10 @@
+,answer,SHAP,LIME
+Guilt,No,0.235,0.363
+Appetite,Not at all,0.051,0.063
+Age,45-50,0.031,0.038
+Concentration,No,-0.027,-0.07
+Bonding,Sometimes,0.027,0.055
+Suicide item,Yes,0.024,0.036
+Irritable,No,0.004,0.005
+Sleep trouble,Two or more days a week,-0.004,-0.006
+Sad / tearful,Yes,0.003,0.01
