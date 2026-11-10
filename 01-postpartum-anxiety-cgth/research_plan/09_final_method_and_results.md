@@ -15,7 +15,7 @@ The confidence-gated hybrid (logistic regression deciding confident cases, rando
 | SVM (calibrated) | Margin-based kernel model |
 | **Hybrid Ensemble (proposed)** | Soft voting of random forest, extra trees and SVM |
 
-The hybrid combination was selected among 57 candidate ensembles on two development runs (seeds 7 and 2026) and then confirmed on a separate final run (seed 42), so the final ranking is not tuned to the reported folds.
+The hybrid combination was selected among 55 candidate hybrids (50 soft-voting combinations of 2–4 of six base models, and 5 stacking models) on two development runs (seeds 7 and 2026) and then confirmed on a separate final run (seed 42), so the final ranking is not tuned to the reported folds.
 
 ## Main results (seed 42, 50 test folds)
 
