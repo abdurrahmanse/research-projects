@@ -78,7 +78,7 @@ Both methods tell the same story. SHAP values add up exactly to each prediction;
 - **Fairness:** the Hybrid Ensemble's balanced accuracy ranges from 65.6% (age 25–30) to 83.7% (age 30–35); bands have 49–76 respondents.
 - **Calibration:** the Hybrid Ensemble's probabilities follow the observed rates closely (Brier score 0.163).
 
-All tables and the 11 figures are saved in `results/final/`.
+All tables and the 11 figures are saved in `results/final/`. A detailed 47-page Bengali project book is in `report/Project_Book_bn.pdf`.
 
 ## Scope and claims
 
@@ -103,6 +103,7 @@ Other limits: unknown data origin, small sample, a single dominant question, no 
 ├── notebooks/
 │   └── final_thesis_study.ipynb       # ★ the complete study, one task per cell (47 tasks)
 ├── results/final/                     # tables (CSV) and figures (PNG) written by the notebook
+├── report/Project_Book_bn.pdf         # 47-page Bengali project book (method, results, XAI, limitations, gaps)
 └── research_plan/                     # audit, literature, method, thesis outline, TRIPOD+AI checklist
 ```
 
