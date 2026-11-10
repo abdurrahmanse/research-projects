@@ -1,0 +1,6 @@
+model,train,test,gap
+Logistic Regression,0.776,0.73,0.045
+Random Forest,0.846,0.771,0.075
+Extra Trees,0.931,0.76,0.171
+SVM,0.862,0.767,0.096
+Hybrid Ensemble (proposed),0.874,0.772,0.102

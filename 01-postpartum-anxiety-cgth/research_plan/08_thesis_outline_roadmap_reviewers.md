@@ -1,5 +1,7 @@
 # 08 — Thesis Outline, Roadmap, Reviewer Criticisms
 
+> **Earlier design.** This document describes the confidence-gated hybrid (CGTH) design. Task numbers refer to its notebook, which is kept in git history. The final study is described in `09_final_method_and_results.md`.
+
 ## Chapter outline
 1. **Introduction:** postpartum mental health; the accuracy-versus-explainability problem in screening models; H1, H2 and the research questions.
 2. **Literature review:** doc 03 table and gap matrix; short section on cascades and selective classification in machine learning.

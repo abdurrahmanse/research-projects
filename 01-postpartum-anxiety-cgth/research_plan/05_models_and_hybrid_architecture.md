@@ -1,5 +1,7 @@
 # 05 — Models and Hybrid Architecture
 
+> **Earlier design.** This document describes the confidence-gated hybrid (CGTH) design. Task numbers refer to its notebook, which is kept in git history. The final study is described in `09_final_method_and_results.md`.
+
 ## Data facts that drive the choices
 326 unique rows, 9 categorical predictors (about 28 one-hot columns), mild imbalance (58/42).
 

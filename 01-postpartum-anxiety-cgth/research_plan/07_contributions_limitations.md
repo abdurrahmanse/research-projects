@@ -1,5 +1,7 @@
 # 07 — Contributions, Clinical Relevance, Limitations
 
+> **Earlier design.** This document describes the confidence-gated hybrid (CGTH) design. Task numbers refer to its notebook, which is kept in git history. The final study is described in `09_final_method_and_results.md`.
+
 ## Contributions
 
 | # | Contribution | Evidence (notebook task) |

@@ -1,5 +1,7 @@
 # 06 — Experimental Methodology, Evaluation and Explainability
 
+> **Earlier design.** This document describes the confidence-gated hybrid (CGTH) design. Task numbers refer to its notebook, which is kept in git history. The final study is described in `09_final_method_and_results.md`.
+
 Everything below is implemented in `notebooks/01_cgth_hybrid_study.ipynb`; task numbers refer to its cells.
 
 ## Pipeline (leakage-free)

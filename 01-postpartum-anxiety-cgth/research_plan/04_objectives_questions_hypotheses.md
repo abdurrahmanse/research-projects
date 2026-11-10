@@ -1,5 +1,7 @@
 # 04 — Problem, Objectives, Questions, Hypotheses
 
+> **Earlier design.** This document describes the confidence-gated hybrid (CGTH) design. Task numbers refer to its notebook, which is kept in git history. The final study is described in `09_final_method_and_results.md`.
+
 ## Research problem
 In mental-health screening, simple models are easy to explain but less accurate, and complex models are more accurate but harder to explain. Usual hybrids such as voting and stacking blend both models for every person, so no individual decision stays simple to explain. It is unknown whether a hybrid that lets a transparent model decide most cases can keep the accuracy of a complex model on postpartum survey data.
 

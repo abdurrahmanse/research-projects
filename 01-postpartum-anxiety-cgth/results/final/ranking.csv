@@ -1,0 +1,6 @@
+model,balanced_accuracy,roc_auc,rank
+Hybrid Ensemble (proposed),0.772,0.843,1.75
+Random Forest,0.771,0.843,2.25
+Extra Trees,0.76,0.848,2.5
+SVM,0.767,0.822,3.5
+Logistic Regression,0.73,0.8,5.0

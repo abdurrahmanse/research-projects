@@ -10,9 +10,9 @@ A portfolio of self-contained machine-learning research projects. Each project l
 
 | # | Project | Question | Main result | Status |
 |---|---|---|---|---|
-| 01 | [Postpartum anxiety screening with a confidence-gated hybrid (CGTH)](01-postpartum-anxiety-cgth/) | Can a transparent model make most decisions while a random forest handles only the uncertain cases, without losing accuracy? | Balanced accuracy 0.757 (random forest 0.761, logistic regression 0.730), with 68% of decisions made by the transparent model | Exploratory, in progress |
+| 01 | [Interpretable postpartum anxiety symptom screening with a hybrid ensemble and explainable AI](01-postpartum-anxiety-cgth/) | Which of five algorithms predicts a self-reported anxiety item best without leakage, and do SHAP and LIME explain it the same way? | Hybrid Ensemble ranks first: balanced accuracy 77.2%, ROC-AUC 0.843 (not significantly above random forest); SHAP and LIME agree (Spearman 0.98) | Analysis complete |
 
-Each project README holds the abstract, method, results, limitations and reproduction steps. Project 01 also has a [Bengali summary report](01-postpartum-anxiety-cgth/reports/CGTH_Project_Report_bn.pdf).
+Each project README holds the abstract, method, results, limitations and reproduction steps.
 
 ## Repository layout
 
@@ -25,11 +25,9 @@ research-projects/
 │   ├── README.md
 │   ├── requirements.txt
 │   ├── data/                      # raw data (read-only) and data card
-│   ├── notebooks/                 # numbered notebooks
+│   ├── notebooks/                 # the study notebook
 │   ├── results/                   # tables and figures
-│   ├── research_plan/             # audit, literature, hypotheses, methodology
-│   ├── reports/                   # PDF summaries
-│   └── archive/                   # earlier experiments, kept unchanged
+│   └── research_plan/             # audit, literature, method, thesis outline
 └── 02-…/                          # future projects follow the same layout
 ```
 
@@ -52,7 +50,7 @@ Each project has its own environment. For project 01:
 cd 01-postpartum-anxiety-cgth
 python -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
-cd notebooks && jupyter lab 01_cgth_hybrid_study.ipynb     # Run All
+cd notebooks && jupyter lab final_thesis_study.ipynb     # Run All
 ```
 
 ## Adding a new project
@@ -60,7 +58,7 @@ cd notebooks && jupyter lab 01_cgth_hybrid_study.ipynb     # Run All
 1. Copy the layout from [docs/project_template.md](docs/project_template.md) into a new folder named `NN-short-topic-name`.
 2. Write the `data/DATA_CARD.md` before modelling.
 3. Add a row to the project table above.
-4. Keep abandoned experiments in the project's `archive/` instead of deleting them.
+4. Remove superseded experiments once a final notebook replaces them; they stay recoverable in git history.
 
 ## Data and ethics
 

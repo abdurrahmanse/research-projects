@@ -1,0 +1,6 @@
+model,mean,lower_95,upper_95
+Logistic Regression,0.73,0.668,0.792
+Random Forest,0.771,0.719,0.823
+Extra Trees,0.76,0.711,0.809
+SVM,0.767,0.716,0.818
+Hybrid Ensemble (proposed),0.772,0.721,0.823
