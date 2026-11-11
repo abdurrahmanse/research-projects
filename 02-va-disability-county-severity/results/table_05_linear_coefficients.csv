@@ -1,0 +1,5 @@
+,points_per_sd,ci_low,ci_high,one_sd_equals
+Share aged 17–44,-3.52,-4.85,-2.16,6.4 points
+Share aged 65 or older,-5.7,-7.98,-3.3,8.9 points
+Share female,1.96,0.98,3.11,3.4 points
+County size (log10 recipients),0.03,-0.68,0.89,×3.5 recipients

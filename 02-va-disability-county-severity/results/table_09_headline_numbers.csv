@@ -1,0 +1,20 @@
+,value
+counties in file,3144
+counties in main sample,2674
+main sample share of county recipients,0.9942
+pooled high-rating share,0.5859
+county share p5,0.3954
+county share median,0.5584
+county share p95,0.6622
+observed SD (points),8.1
+chance SD (points),2.23
+variance not due to chance,0.924
+variance between states,0.633
+lowest state,Minnesota 37.9%
+highest state,North Carolina 66.0%
+"R2 gradient boosting, random folds",0.405
+"R2 gradient boosting, state-grouped folds",0.339
+"R2 linear, state-grouped folds",0.329
+"R2 state average, random folds",0.618
+"MAE gradient boosting, state-grouped (points)",5.249
+"MAE baseline, state-grouped (points)",6.531

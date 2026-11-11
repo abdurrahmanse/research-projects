@@ -1,0 +1,5 @@
+check,counties,grouped_r2
+Main analysis,2674,0.339
+"Without female share, larger sample",2923,0.291
+Only counties with 500+ recipients,1638,0.357
+Outcome = share rated 100%,2674,0.357

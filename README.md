@@ -11,6 +11,7 @@ A portfolio of self-contained machine-learning research projects. Each project l
 | # | Project | Question | Main result | Status |
 |---|---|---|---|---|
 | 01 | [Explainable hybrid stacking ensemble for postpartum anxiety screening](01-postpartum-anxiety-xai-hybrid/) | Which of seven models predicts a self-reported anxiety item best, and do SHAP and LIME explain the hybrid the same way? | Hybrid Stack: test accuracy 98.67% (95% CI 97.3–99.7%), not significantly different from CatBoost or random forest; 84.7% on unseen answer patterns; SHAP more faithful than LIME | Analysis complete |
+| 02 | [County-level severity mix of VA disability compensation](02-va-disability-county-severity/) | How much does the share of recipients rated 70%+ differ between US counties, and can age mix, female share and size predict it in an unseen state? | Pooled share 58.6%; county spread is 92% real, 63% of it between states; R² 0.41 with random folds but 0.34 with state-grouped folds | Analysis complete |
 
 Each project README holds the abstract, method, results, limitations and reproduction steps.
 
@@ -28,7 +29,8 @@ research-projects/
 │   ├── notebooks/                 # the study notebook
 │   ├── results/                   # tables and figures
 │   └── research/                  # literature review and research gaps
-└── 02-…/                          # future projects follow the same layout
+├── 02-va-disability-county-severity/    # project 02 (same layout, smaller)
+└── 03-…/                          # future projects follow the same layout
 ```
 
 ## Working principles
