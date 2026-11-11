@@ -1,0 +1,1328 @@
+{# ------------------------------------------------------------------ structure #}
+{% set chapters = [
+  ('1', 'Introduction', [('1.1','Why postpartum anxiety matters'), ('1.2','The problem with accuracy alone'), ('1.3','Research questions'), ('1.4','Objectives'), ('1.5','Contributions'), ('1.6','How this book is organised')]),
+  ('2', 'Background and Core Concepts', [('2.1','Screening is not diagnosis'), ('2.2','Tree ensembles, boosting and neural networks'), ('2.3','Stacked generalisation'), ('2.4','Explaining a prediction: SHAP and LIME'), ('2.5','Honest uncertainty: calibration and conformal prediction'), ('2.6','Counterfactual explanations'), ('2.7','Data leakage and repeated records')]),
+  ('3', 'Related Work and Research Gaps', [('3.1','Studies on the same dataset'), ('3.2','The wider postpartum machine-learning literature'), ('3.3','Seven research gaps'), ('3.4','Where this project stands')]),
+  ('4', 'The Dataset', [('4.1','Source and structure'), ('4.2','The questions and their answers'), ('4.3','Missing answers'), ('4.4','The target and its balance'), ('4.5','Association of each question with the target'), ('4.6','Repeated answer patterns'), ('4.7','Ethical considerations')]),
+  ('5', 'Methodology', [('5.1','Study design at a glance'), ('5.2','Data preparation'), ('5.3','The seven competing models'), ('5.4','The proposed Hybrid Stack'), ('5.5','Hyper-parameter tuning'), ('5.6','Validation protocol'), ('5.7','Performance metrics'), ('5.8','Statistical testing'), ('5.9','Explainability protocol'), ('5.10','Trustworthy-AI checks'), ('5.11','Duplicate-aware robustness check'), ('5.12','Software and reproducibility')]),
+  ('6', 'Results I: The Model Competition', [('6.1','Hyper-parameter search'), ('6.2','Ten-fold cross-validation'), ('6.3','Held-out test set'), ('6.4','Overfitting check'), ('6.5','ROC curves, confusion matrices and calibration'), ('6.6','Are the differences statistically real?')]),
+  ('7', 'Results II: Explaining the Hybrid Stack', [('7.1','What SHAP says'), ('7.2','What LIME says'), ('7.3','Do SHAP and LIME agree?'), ('7.4','Which explanation is more faithful?'), ('7.5','Stability and cost'), ('7.6','Do the seven models agree on what matters?')]),
+  ('8', 'Results III: Trustworthy-AI Checks', [('8.1','Conformal prediction'), ('8.2','A counterfactual example'), ('8.3','Accuracy by age group')]),
+  ('9', 'Results IV: The Duplicate Audit', [('9.1','Twins in the test set'), ('9.2','Grouped cross-validation'), ('9.3','How to read a 100% score')]),
+  ('10', 'Comparison with Published Work', [('10.1','Accuracy under the common protocol'), ('10.2','What surrounds the number')]),
+  ('11', 'Discussion', [('11.1','Answers to the research questions'), ('11.2','What this project solved'), ('11.3','Practical implications'), ('11.4','How the results should be reported')]),
+  ('12', 'Limitations and Threats to Validity', [('12.1','Data limitations'), ('12.2','Method limitations'), ('12.3','Threats to validity')]),
+  ('13', 'Future Work', [('13.1','Near term: strengthen the same study'), ('13.2','Medium term: better data'), ('13.3','Long term: towards clinical use')]),
+  ('14', 'Conclusion', []),
+] %}
+{% set appendices = [('A', 'Reproducing the Study'), ('B', 'Notebook Task Map'), ('C', 'Complete Result Tables'), ('D', 'Glossary and Abbreviations')] %}
+{% set sections = {} %}
+{% for num, title, secs in chapters %}{% for no, t in secs %}{% set _ = sections.update({no: t}) %}{% endfor %}{% endfor %}
+
+{% macro open_chapter(num, lead) %}
+{% for cnum, title, secs in chapters if cnum == num %}
+<section class="chapter" id="ch{{ num }}"><header><div class="label">Chapter {{ num }}</div><h1>{{ title }}</h1><p class="lead">{{ lead }}</p></header>
+{% endfor %}
+{% endmacro %}
+{% macro h2(no) %}<h2 id="s{{ no | replace('.', '-') }}"><span class="no">{{ no }}</span>{{ sections[no] }}</h2>{% endmacro %}
+{% macro figure(no, file, caption, cls='') %}<figure class="{{ cls }}"><img src="{{ fig(file) }}" alt=""><figcaption><b>Figure {{ no }}.</b> {{ caption }}</figcaption></figure>{% endmacro %}
+{% macro cap(no, text) %}<div class="cap"><b>Table {{ no }}.</b> {{ text }}</div>{% endmacro %}
+{% macro cite(numbers) %}<span class="cite">[{{ numbers }}]</span>{% endmacro %}
+{% macro pg(id) %}{{ pages.get(id, '') }}{% endmacro %}
+{% macro svgbox(x, y, w, h, title, lines=[], fill='#ffffff', stroke='#2a78d6', tcolor='#12305a', lcolor='#55607a') %}
+<rect x="{{ x }}" y="{{ y }}" width="{{ w }}" height="{{ h }}" rx="6" fill="{{ fill }}" stroke="{{ stroke }}" stroke-width="1.4"/>
+<text x="{{ x + w / 2 }}" y="{{ y + (22 if lines else h / 2 + 4.5) }}" text-anchor="middle" font-size="12.5" font-weight="600" fill="{{ tcolor }}">{{ title }}</text>
+{% for line in lines %}<text x="{{ x + w / 2 }}" y="{{ y + 39 + loop.index0 * 14 }}" text-anchor="middle" font-size="10.5" fill="{{ lcolor }}">{{ line }}</text>{% endfor %}
+{% endmacro %}
+{% set arrowdef %}<defs><marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#55607a"/></marker></defs>{% endset %}
+{% set mc_other = mcnemar | rejectattr('hybrid_vs', 'equalto', 'Logistic Regression') | list %}
+{% set mc_min = mc_other | map(attribute='p_value') | min %}
+{% set wx_other = wilcoxon | rejectattr('hybrid_vs', 'equalto', 'Logistic Regression') | list %}
+{% set wx_min = wx_other | map(attribute='p_holm') | min %}
+{% set wx_lr = (wilcoxon | selectattr('hybrid_vs', 'equalto', 'Logistic Regression') | list)[0] %}
+{% set top = importance[0] %}
+{% set c95 = conformal[1] %}
+{% set speed = (xai['Seconds per person'].SHAP | float) / (xai['Seconds per person'].LIME | float) %}
+{% set TITLE = 'Beyond Accuracy: A Leakage-Audited, Explainable and Uncertainty-Aware Stacking Ensemble for Postpartum Anxiety Screening from Questionnaire Data' %}
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>{{ TITLE }}</title>
+<meta name="author" content="Abdur Rahman">
+<style>{{ css }}</style>
+</head>
+<body>
+
+{# ====================================================================== COVER #}
+<div class="cover">
+  <svg class="art" viewBox="0 0 210 297" preserveAspectRatio="none">
+    <circle cx="186" cy="238" r="92" fill="#1b4379"/>
+    <circle cx="186" cy="238" r="62" fill="#22559a"/>
+    <circle cx="186" cy="238" r="33" fill="#2a78d6"/>
+    <circle cx="150" cy="197" r="5" fill="#eb6834"/>
+    <g stroke="#3f6aa6" stroke-width="0.25" fill="none">
+      <path d="M0 262 C 60 232, 110 290, 210 214"/><path d="M0 272 C 70 244, 120 297, 210 230"/><path d="M0 282 C 80 258, 130 302, 210 248"/>
+    </g>
+  </svg>
+  <div class="inner">
+    <div class="kicker">A complete project book</div>
+    <h1>Beyond<br>Accuracy</h1>
+    <div class="sub">A Leakage-Audited, Explainable and Uncertainty-Aware Stacking Ensemble for Postpartum Anxiety Screening from Questionnaire Data</div>
+    <div class="rule"></div>
+    <div class="author">Abdur Rahman</div>
+    <div class="meta">Interpretable machine learning · leakage-aware evaluation · health survey data</div>
+  </div>
+  <div class="foot"><span>Research Projects · Project 01</span><span>November 2026</span></div>
+</div>
+
+{# ================================================================= TITLE PAGE #}
+<section class="titlepage">
+  <div class="t">{{ TITLE }}</div>
+  <div class="s">Motivation, methods, results, limitations and future directions of a seven-model study on {{ '{:,}'.format(n.rows) }} questionnaire responses</div>
+  <dl>
+    <dt>Author</dt><dd>Abdur Rahman</dd>
+    <dt>Project</dt><dd>01 · Explainable hybrid stacking ensemble for postpartum anxiety screening</dd>
+    <dt>Edition</dt><dd>First edition, November 2026</dd>
+    <dt>Data</dt><dd>Kaggle <i>PostPartum Depression</i> questionnaire dataset, {{ '{:,}'.format(n.rows) }} responses</dd>
+    <dt>Software</dt><dd>Python {{ n.python }} with the library versions pinned in <code>requirements.txt</code></dd>
+    <dt>Source of numbers</dt><dd>Every table and figure in this book is produced by the study notebook. The book is generated from the notebook's result files, so the text and the results cannot drift apart.</dd>
+    <dt>Status</dt><dd>Research result. Not a medical device and not for individual diagnosis.</dd>
+  </dl>
+  <div class="box warn" style="margin-top:12mm">
+    <div class="h">Before citing this work</div>
+    <p>Accuracies of earlier papers were taken from abstracts and search summaries, not from the full texts. Entries marked <span class="flag">confirm</span> in the reference list have details that could not be verified. Open each paper and check it before you cite it.</p>
+  </div>
+</section>
+
+{# =================================================================== ABSTRACT #}
+<section class="front" id="abstract">
+  <h1>Abstract</h1>
+  <p><strong>Background.</strong> Machine-learning studies on the public <i>PostPartum Depression</i> questionnaire dataset report accuracies between {{ n.lit_low | f2 }}% and {{ n.lit_high | f1 }}%. They rarely explain individual predictions, quantify uncertainty, test whether one model is really better than another, or examine the fact that most rows of the dataset repeat an earlier answer pattern.</p>
+  <p><strong>Objective.</strong> To build and evaluate an explainable stacking ensemble that predicts a self-reported <i>Feeling anxious</i> answer from eight other questionnaire answers and an age band, and to audit how far the reported accuracy reflects prediction on new answer patterns.</p>
+  <p><strong>Methods.</strong> All {{ '{:,}'.format(n.rows) }} responses were split into a stratified {{ '{:,}'.format(n.train_n) }}-person training set and a {{ n.test_n }}-person test set. Seven models competed: logistic regression, random forest, XGBoost, LightGBM, CatBoost, a multilayer perceptron, and a proposed Hybrid Stack in which CatBoost, XGBoost, random forest and the perceptron feed a logistic-regression meta-learner through out-of-fold predictions. Models were compared with ten-fold cross-validation, a single final test, the Friedman test, Wilcoxon signed-rank tests with Holm correction, McNemar tests and a bootstrap confidence interval. The Hybrid Stack was explained with SHAP and LIME, which were compared on agreement, deletion-based faithfulness, stability and speed. Calibration, conformal prediction, a counterfactual example and an age-group check were added. Finally, grouped cross-validation kept every answer pattern on one side of each split.</p>
+  <p><strong>Results.</strong> The Hybrid Stack reached {{ test[H].accuracy | f2 }}% test accuracy (95% CI {{ n.ci }}%), F1 {{ test[H].f1 | f2 }}% and ROC-AUC {{ test[H].roc_auc | f3 }}. CatBoost reached {{ test['CatBoost'].accuracy | f2 }}% on the same split and {{ cv['CatBoost'].mean | f2 }}% &plusmn; {{ cv['CatBoost'].std | f2 }} in cross-validation. The Hybrid Stack was significantly better than logistic regression (Holm-corrected p = {{ wx_lr.p_holm | f3 }}) and not significantly different from the other five models. SHAP and LIME both ranked <i>{{ top.question }}</i> first ({{ top.shap | f1 }}% and {{ top.lime | f1 }}% of total importance); they agreed globally (Spearman {{ agreement['Global Spearman'] | f3 }}) but less per person ({{ agreement['Per-person Spearman'] | f3 }}), and SHAP was more faithful. Conformal prediction at a 95% target covered {{ c95.actual | f2 }}% of test people. However, {{ n.twin_share | f1 }}% of test people had an identical answer pattern in the training set; with grouped cross-validation, accuracy fell to {{ n.grouped_low | f1 }}–{{ n.grouped_high | f1 }}% for the six non-linear models.</p>
+  <p><strong>Conclusion.</strong> Under the random-split protocol used in earlier work, the proposed ensemble matches the published range, with explanations, uncertainty estimates and statistical tests that earlier studies lack. The duplicate audit shows that the 98–100% figures on this dataset mostly measure recognition of answer patterns already seen, and that about {{ robust[H].grouped | round | int }}% is the realistic estimate for a new pattern. Future studies on this dataset should report duplicate-aware validation next to the standard one.</p>
+  <p class="keywords"><b>Keywords</b> &nbsp; postpartum anxiety · perinatal mental health · stacking ensemble · explainable AI · SHAP · LIME · conformal prediction · data leakage · duplicate-aware validation · questionnaire data</p>
+
+</section>
+
+<section class="front" id="keyfindings">
+  <h1>Key findings at a glance</h1>
+  <div class="tiles">
+    <div class="tile"><div class="v">{{ test[H].accuracy | f2 }}%</div><div class="k">Hybrid Stack, test set</div><div class="d">95% CI {{ n.ci }}%; {{ n.hybrid_errors }} errors in {{ n.test_n }} people</div></div>
+    <div class="tile"><div class="v">{{ cv[H].mean | f2 }}%</div><div class="k">Hybrid Stack, 10-fold CV</div><div class="d">&plusmn; {{ cv[H].std | f2 }} points across folds</div></div>
+    <div class="tile o"><div class="v">{{ robust[H].grouped | f1 }}%</div><div class="k">On unseen answer patterns</div><div class="d">Grouped 5-fold CV; the realistic estimate</div></div>
+    <div class="tile o"><div class="v">{{ n.twin_share | f1 }}%</div><div class="k">Test people with a twin</div><div class="d">Identical answer pattern already in the training set</div></div>
+    <div class="tile g"><div class="v">{{ agreement['Global Spearman'] | f3 }}</div><div class="k">SHAP–LIME global agreement</div><div class="d">Per person only {{ agreement['Per-person Spearman'] | f3 }}</div></div>
+    <div class="tile g"><div class="v">{{ c95.actual | f1 }}%</div><div class="k">Conformal coverage</div><div class="d">Against a 95% promise</div></div>
+  </div>
+  <h3>One model, four ways of measuring it</h3>
+  <div class="tbl">
+    <table>
+      <thead><tr><th style="width:62mm">Protocol</th><th class="r" style="width:20mm">Accuracy</th><th></th></tr></thead>
+      <tbody>
+        <tr><td>Held-out test set (random split)</td><td class="r">{{ test[H].accuracy | f2 }}%</td><td><span class="bar" style="width:{{ test[H].accuracy * 0.8 }}mm"></span></td></tr>
+        <tr><td>Ten-fold cross-validation (random folds)</td><td class="r">{{ cv[H].mean | f2 }}%</td><td><span class="bar" style="width:{{ cv[H].mean * 0.8 }}mm"></span></td></tr>
+        <tr class="hl"><td>Grouped cross-validation (unseen patterns)</td><td class="r">{{ robust[H].grouped | f2 }}%</td><td><span class="bar o" style="width:{{ robust[H].grouped * 0.8 }}mm"></span></td></tr>
+        <tr><td>Always answering "anxious" (floor)</td><td class="r">{{ n.anxious_share | f2 }}%</td><td><span class="bar" style="width:{{ n.anxious_share * 0.8 }}mm;background:#9aa0a6"></span></td></tr>
+      </tbody>
+    </table>
+  </div>
+  <h3>The seven models side by side</h3>
+  <div class="tbl">
+    <table>
+      <thead><tr><th>Model</th><th class="r">10-fold CV</th><th class="r">Test</th><th class="r">Grouped CV</th><th class="r">Test errors</th><th class="r">Brier</th></tr></thead>
+      <tbody>
+        {% for m in models %}
+        <tr{% if m == H %} class="hl"{% endif %}><td>{{ m }}</td><td class="r">{{ cv[m].mean | f2 }}%</td><td class="r">{{ test[m].accuracy | f2 }}%</td><td class="r">{{ robust[m].grouped | f2 }}%</td><td class="r">{{ confusion[m].fp + confusion[m].fn }}</td><td class="r">{{ test[m].brier | f3 }}</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <div class="box">
+    <div class="h">In one sentence</div>
+    <p>The proposed ensemble is as accurate as the best published models under their protocol, explains itself and knows when it is unsure, and the audit behind it shows that on this dataset about {{ (cv[H].mean - robust[H].grouped) | round | int }} points of every reported accuracy come from repeated answer patterns.</p>
+  </div>
+</section>
+
+{# ======================================================================== TOC #}
+<section class="front" id="contents">
+  <h1>Contents</h1>
+  <div class="toc">
+    <div class="row sec" style="padding-left:0"><a href="#abstract">Abstract</a><span class="dots"></span><span class="pg">{{ pg('abstract') }}</span></div>
+    <div class="row sec" style="padding-left:0"><a href="#keyfindings">Key findings at a glance</a><span class="dots"></span><span class="pg">{{ pg('keyfindings') }}</span></div>
+    {% for num, title, secs in chapters %}
+    <div class="row chap"><a href="#ch{{ num }}"><span class="num">{{ num }}</span>{{ title }}</a><span class="dots"></span><span class="pg">{{ pg('ch' ~ num) }}</span></div>
+    {% for no, t in secs %}
+    <div class="row sec"><a href="#s{{ no | replace('.', '-') }}">{{ no }}&ensp;{{ t }}</a><span class="dots"></span><span class="pg">{{ pg('s' ~ (no | replace('.', '-'))) }}</span></div>
+    {% endfor %}
+    {% endfor %}
+    <div class="row chap"><a href="#references">References</a><span class="dots"></span><span class="pg">{{ pg('references') }}</span></div>
+    {% for letter, title in appendices %}
+    <div class="row chap"><a href="#app{{ letter }}"><span class="num">{{ letter }}</span>{{ title }}</a><span class="dots"></span><span class="pg">{{ pg('app' ~ letter) }}</span></div>
+    {% endfor %}
+  </div>
+</section>
+
+{# ================================================================== CHAPTER 1 #}
+{{ open_chapter('1', 'Why another model for a dataset that already reports 99% accuracy, and what this project sets out to show instead.') }}
+
+{{ h2('1.1') }}
+<p>The weeks and months after childbirth are a period of high risk for a mother's mental health. Postpartum depression is the best-known condition, but anxiety in the same period is also common, frequently occurs together with depression, and is easier to miss because sleeplessness, worry and irritability are often dismissed as a normal part of new parenthood. Untreated, perinatal anxiety and depression affect the mother, her relationship with her partner and the early bond with the baby.</p>
+<p>Screening is the first line of defence. In practice it is done with short questionnaires: a mother answers a handful of questions, and the answers decide whether a clinician looks more closely. A questionnaire is cheap, quick and can be given anywhere, which is exactly why researchers have asked whether a machine-learning model could read the answers and flag women at risk automatically. A growing body of work, reviewed in Chapter 3, has trained models on hospital records, cohort studies and questionnaire data {{ cite('6–13') }}.</p>
+<p>This project works with one such questionnaire dataset: {{ '{:,}'.format(n.rows) }} responses published on Kaggle under the name <i>PostPartum Depression</i> {{ cite('30') }}. It contains an age band and nine items about mood, sleep, appetite, guilt, bonding with the baby and suicide attempt. One item, <i>Feeling anxious</i>, is the target that the dataset's own description names, and it is the answer this study predicts.</p>
+
+{{ h2('1.2') }}
+<p>Several papers have used the same {{ '{:,}'.format(n.rows) }} rows and report accuracies from {{ n.lit_low | f2 }}% to {{ n.lit_high | f1 }}% {{ cite('1–3, 5') }}. On the surface the problem looks solved. Four things are missing, however, before such a number can support a screening tool.</p>
+<ul>
+  <li><strong>An explanation.</strong> A clinician cannot act on "the model says anxious" without knowing which answers produced that result. Most earlier studies on this dataset give no per-person explanation, and the one that shows several explanation methods side by side does not measure them against each other {{ cite('4') }}.</li>
+  <li><strong>An honest statement of uncertainty.</strong> Every prediction in those papers is delivered with full confidence. A screening tool should be able to say "I am not sure" and hand the case to a human.</li>
+  <li><strong>Evidence that the winning model really wins.</strong> A single accuracy on a single test split of about 300 people cannot separate 98.7% from 99.6%. Without a confidence interval and a statistical test, a ranking of models is an anecdote.</li>
+  <li><strong>A check on the data itself.</strong> Of the {{ '{:,}'.format(n.rows) }} responses in this dataset, {{ '{:,}'.format(n.repeated_rows) }} repeat an answer pattern that already occurs earlier in the file. A random split therefore puts copies of the same pattern in both the training and the test set, and a model can score highly by recognising what it has already seen.</li>
+</ul>
+<div class="box">
+  <div class="h">The central idea of this book</div>
+  <p>A high accuracy is where the evaluation of a screening model starts. This project builds a competitive model and then asks four further questions of it: can it explain itself, does it know when it is unsure, is it really better than its rivals, and does its accuracy survive when it is tested on answer patterns it has never seen?</p>
+</div>
+
+{{ h2('1.3') }}
+<p>The study is organised around five research questions.</p>
+<div class="tbl">
+  {{ cap('1.1', 'Research questions and the chapters that answer them.') }}
+  <table>
+    <thead><tr><th style="width:9mm"></th><th>Research question</th><th style="width:30mm">Answered in</th></tr></thead>
+    <tbody>
+      <tr><td>RQ1</td><td>Which of seven models, from a linear baseline to a stacked hybrid, predicts the <i>Feeling anxious</i> answer best, and are the differences statistically significant?</td><td>Chapter 6</td></tr>
+      <tr><td>RQ2</td><td>Which questionnaire answers drive the hybrid model's predictions, and do SHAP and LIME give the same explanation?</td><td>Chapter 7</td></tr>
+      <tr><td>RQ3</td><td>When SHAP and LIME disagree, which is more faithful to the model, more stable and cheaper to compute?</td><td>Chapter 7</td></tr>
+      <tr><td>RQ4</td><td>Can the model give calibrated probabilities, valid uncertainty sets, actionable counterfactuals and comparable accuracy across age groups?</td><td>Chapter 8</td></tr>
+      <tr><td>RQ5</td><td>How much of the measured accuracy remains when no answer pattern is shared between training and test data?</td><td>Chapter 9</td></tr>
+    </tbody>
+  </table>
+</div>
+
+{{ h2('1.4') }}
+<ol>
+  <li>Build seven classifiers under one identical preprocessing and validation protocol so that their results are directly comparable.</li>
+  <li>Propose and evaluate a heterogeneous stacking ensemble (the Hybrid Stack) that combines two boosting models, a bagging model and a neural network.</li>
+  <li>Support every comparison with a confidence interval and an appropriate statistical test.</li>
+  <li>Explain the hybrid's predictions with two independent methods and measure those methods against each other.</li>
+  <li>Add uncertainty quantification, a counterfactual explanation and a subgroup check.</li>
+  <li>Audit the dataset for repeated answer patterns and report a duplicate-aware accuracy next to the standard one.</li>
+  <li>Keep the whole study reproducible: fixed seeds, pinned library versions, one notebook of {{ n.task_count }} small tasks.</li>
+</ol>
+
+{{ h2('1.5') }}
+<p>The project makes five contributions.</p>
+<ul>
+  <li><strong>A competitive, fully documented stacking ensemble.</strong> The Hybrid Stack reaches {{ test[H].accuracy | f2 }}% test accuracy with a ROC-AUC of {{ test[H].roc_auc | f3 }} and one of the best-calibrated probability outputs among the seven models.</li>
+  <li><strong>A statistically honest model comparison.</strong> The tests show that six of the seven models are indistinguishable on this data, a finding that single-number comparisons in earlier work could not reveal.</li>
+  <li><strong>A quantitative SHAP-versus-LIME comparison.</strong> The two methods are measured on agreement, faithfulness, stability and speed, instead of only being displayed.</li>
+  <li><strong>Trustworthy-AI additions that are new for this dataset.</strong> Conformal prediction sets, a counterfactual example and an age-group accuracy check.</li>
+  <li><strong>A duplicate audit.</strong> To our knowledge from the abstracts reviewed, no earlier study on this dataset analyses its repeated answer patterns. This book shows that they explain most of the gap between about 85% and 98–100%.</li>
+</ul>
+
+{{ h2('1.6') }}
+<p>Chapter 2 introduces the concepts a reader needs. Chapter 3 reviews earlier work and states seven research gaps. Chapter 4 describes the dataset. Chapter 5 gives the full methodology with diagrams. Chapters 6 to 10 present the results: the model competition, the explanations, the trustworthy-AI checks, the duplicate audit and the comparison with published work. Chapter 11 discusses what the results mean and what was solved, Chapter 12 lists the limitations, Chapter 13 sets out future work and Chapter 14 concludes. Appendices give the reproduction steps, a map of the notebook, complete result tables and a glossary.</p>
+</section>
+
+{# ================================================================== CHAPTER 2 #}
+{{ open_chapter('2', 'The ideas the study relies on, explained without assuming prior knowledge of any of them.') }}
+
+{{ h2('2.1') }}
+<p>A <strong>diagnosis</strong> is made by a clinician after an interview and, where needed, further assessment. A <strong>screening</strong> result only sorts people into "look closer" and "probably fine". This difference shapes how a screening model should be judged. Missing a woman who needs help (a false negative) is usually worse than asking a healthy woman a few more questions (a false positive), so recall matters as much as accuracy. It also means the label in a screening dataset is not a diagnosis. In this project the label is one self-reported questionnaire item, which limits what any model trained on it can claim.</p>
+
+{{ h2('2.2') }}
+<p>The seven models in this study belong to four families.</p>
+<ul>
+  <li><strong>Linear models.</strong> Logistic regression adds up a weight for each answer and converts the sum into a probability. It is transparent and fast, but it cannot represent interactions, such as an answer that matters only in combination with another.</li>
+  <li><strong>Bagging.</strong> A random forest trains hundreds of decision trees on random resamples of the data and averages their votes. Averaging many independent trees gives a stable model that rarely overfits badly.</li>
+  <li><strong>Boosting.</strong> XGBoost {{ cite('19') }}, LightGBM {{ cite('20') }} and CatBoost {{ cite('21') }} also build many trees, but one after another: each new tree concentrates on the mistakes of the trees before it. The three differ in how they grow trees and handle categories. CatBoost was designed with categorical data in mind, which suits questionnaire answers.</li>
+  <li><strong>Neural networks.</strong> A multilayer perceptron (MLP) passes the inputs through layers of weighted sums and non-linear functions. With two hidden layers it is a small representative of deep learning.</li>
+</ul>
+
+{{ h2('2.3') }}
+<p>Different model families make different mistakes. <strong>Stacking</strong>, introduced by Wolpert {{ cite('18') }}, exploits this. A set of <i>base models</i> each produce a probability, and a second model, the <i>meta-learner</i>, learns how to combine them. The important detail is how the meta-learner is trained. If it saw base-model predictions for the same people those models were trained on, it would learn to trust models that have merely memorised. Stacking therefore uses <strong>out-of-fold predictions</strong>: the training set is cut into folds, and each base model predicts only the fold it was not trained on. The meta-learner sees honest predictions and learns realistic weights.</p>
+<p>With base models <i>f</i><sub>1</sub>, …, <i>f</i><sub>4</sub> and a logistic-regression meta-learner, the final probability for a person with answers <i>x</i> is</p>
+<div class="eq">P(anxious | x) = &sigma;( w<sub>0</sub> + w<sub>1</sub> f<sub>1</sub>(x) + w<sub>2</sub> f<sub>2</sub>(x) + w<sub>3</sub> f<sub>3</sub>(x) + w<sub>4</sub> f<sub>4</sub>(x) ),</div>
+<p>where &sigma;(<i>z</i>) = 1 / (1 + <i>e</i><sup>&minus;<i>z</i></sup>) is the logistic function and the weights <i>w</i> are learned from the out-of-fold probabilities.</p>
+
+{{ h2('2.4') }}
+<p>An ensemble of hundreds of trees and a neural network cannot be read like a formula. Explainable AI (XAI) methods give a post-hoc account of a single prediction: how much did each answer push the probability up or down?</p>
+<h3>SHAP</h3>
+<p>SHAP {{ cite('14') }} is based on Shapley values from cooperative game theory. It treats the answers as players in a game whose payout is the model's prediction and asks what each player contributed on average over all possible orders in which the players could join. The contribution of answer <i>j</i> is</p>
+<div class="eq">&phi;<sub>j</sub> = &Sigma;<sub>S &sube; F \ {j}</sub> &nbsp; [ |S|! (|F| &minus; |S| &minus; 1)! / |F|! ] &nbsp; ( v(S &cup; {j}) &minus; v(S) ),</div>
+<p>where <i>F</i> is the set of all features and <i>v</i>(<i>S</i>) is the model's expected output when only the answers in <i>S</i> are known. SHAP values have a property that makes them easy to check: the baseline prediction plus all contributions equals the model's output for that person exactly. With nine features the exact computation is feasible, so this study uses exact SHAP and no approximation.</p>
+<h3>LIME</h3>
+<p>LIME {{ cite('15') }} takes a different route. Around the person to be explained it generates many slightly changed versions of the answers, asks the model for a prediction on each, and fits a simple weighted linear model to those predictions. The weights of that local linear model are the explanation. LIME is fast and works with any model, but its output depends on random sampling, and its weights do not add up to the prediction.</p>
+<h3>Why compare them</h3>
+<p>The two methods can disagree, and when they do a user has no way of knowing which to trust. This is known as the disagreement problem {{ cite('16') }}. Chapter 7 therefore does not only show both explanations; it measures how often they agree, which one finds the answers that really move the model, and which one is more stable.</p>
+
+{{ h2('2.5') }}
+<p>A probability is <strong>calibrated</strong> if, among all people given a predicted probability of 0.8, about 80% really are positive. The <strong>Brier score</strong>, the mean squared difference between predicted probability and outcome, summarises calibration and accuracy together; lower is better.</p>
+<p><strong>Conformal prediction</strong> {{ cite('23, 24') }} goes one step further. Instead of a single answer it returns a <i>set</i> of answers with a guarantee: if the user asks for 95% coverage, the true answer lies in the set at least about 95% of the time, whatever model is underneath. For a two-class problem the set can be one answer (the model commits), both answers (the model is unsure), or empty (no answer is plausible enough at this strictness). The method needs a nonconformity score for each calibration person, here one minus the probability the model gave to that person's true class, and a threshold taken from a quantile of those scores.</p>
+
+{{ h2('2.6') }}
+<p>SHAP and LIME describe why the model said what it said. A <strong>counterfactual explanation</strong> {{ cite('25') }} answers a more practical question: what is the smallest change to the answers that would have changed the prediction? For a woman flagged as anxious, a counterfactual such as "if irritability were <i>sometimes</i> instead of <i>yes</i>, the model would no longer flag her" tells a clinician which symptom the model's decision hinges on.</p>
+
+{{ h2('2.7') }}
+<p><strong>Data leakage</strong> is any route by which information from the test data reaches the model during training. It makes a model look better than it is and is a leading cause of irreproducible results in machine-learning-based science {{ cite('27') }}. Common routes are fitting a scaler or encoder on all data before splitting, tuning hyper-parameters on the test set, and <strong>repeated records</strong>: if the same row appears on both sides of a split, the test no longer measures prediction on new cases.</p>
+<p>The remedy for repeated records is <strong>grouped validation</strong>. Rows that share the same content are given the same group label, and the split is made so that a whole group falls on one side. The test set then contains only patterns the model has never seen, which is the situation a deployed screening tool faces when a woman gives a new combination of answers.</p>
+</section>
+
+{# ================================================================== CHAPTER 3 #}
+{{ open_chapter('3', 'What earlier studies did with this dataset and with postpartum data in general, and the seven gaps they leave open.') }}
+
+{{ h2('3.1') }}
+<p>Five published studies use the same {{ '{:,}'.format(n.rows) }}-row questionnaire dataset. Table 3.1 summarises them. Details marked <span class="flag">confirm</span> could not be verified from the abstract and must be checked in the full text.</p>
+<div class="tbl long">
+  {{ cap('3.1', 'Studies on the Kaggle <i>PostPartum Depression</i> dataset. Results as reported in abstracts and search summaries.') }}
+  <table>
+    <thead><tr><th style="width:27mm">Study</th><th>Method</th><th style="width:26mm">Reported result</th><th style="width:22mm">XAI</th><th style="width:40mm">What is missing</th></tr></thead>
+    <tbody>
+      <tr><td>Lilhore et al., 2024 {{ cite('1') }}</td><td>Hybrid transfer learning with BiLSTM and CNN, compared with decision tree, random forest, AdaBoost, LightGBM, XGBoost and CatBoost</td><td>Accuracy 99.6%, precision 99.7%</td><td>Not reported in the abstract <span class="flag">confirm</span></td><td>No explanation of predictions, no uncertainty, repeated answer patterns not discussed</td></tr>
+      <tr><td>Raza et al., 2024 {{ cite('2') }}</td><td>MDKR: decision tree, KNN and random forest feeding an MLP meta-learner; eleven algorithms compared with k-fold validation</td><td>Accuracy 99%</td><td>Not reported in the abstract <span class="flag">confirm</span></td><td>As above. Some sources say the suicide-attempt item was the target <span class="flag">confirm</span></td></tr>
+      <tr><td>Nayee et al., 2026 {{ cite('3') }}</td><td>SVM, XGBoost, random forest, decision tree and RBFNN/KNN with recursive feature elimination</td><td>Accuracy 96.99%</td><td>No</td><td>No XAI, no statistical tests, no duplicate analysis</td></tr>
+      <tr><td>Shivaprasad et al., 2024 {{ cite('4') }}</td><td>Custom ensemble stacking of baseline classifiers; target reported as the suicide-attempt item <span class="flag">confirm</span></td><td>Not confirmed <span class="flag">confirm</span></td><td>SHAP, LIME, ELI5, Anchor</td><td>Different target; XAI methods shown side by side but apparently not compared numerically</td></tr>
+      <tr><td>JISEM study {{ cite('5') }} <span class="flag">confirm</span></td><td>Random forest, XGBoost, CatBoost</td><td>CatBoost 95.68%, XGBoost 95%, RF 94%</td><td>Not confirmed</td><td>No statistical tests or uncertainty in the summary seen</td></tr>
+    </tbody>
+  </table>
+  <div class="note">A sixth item, a 2025–26 preprint on explainable deep learning for postpartum depression (accuracy 96%, ROC-AUC 0.980), may use a different 1,503-record dataset and is therefore not included in the numerical comparison.</div>
+</div>
+<p>The benchmark on this dataset is thus {{ n.lit_low | f2 }}% to {{ n.lit_high | f1 }}% accuracy under a random train/test split of all rows. Three observations follow. First, the range is narrow and close to the ceiling, so further gains in accuracy are small and hard to demonstrate. Second, the studies report single numbers without confidence intervals. Third, none of the abstracts mentions that most rows are repeats, which Chapter 9 shows is essential for interpreting any of these numbers.</p>
+
+{{ h2('3.2') }}
+<p>Studies on other, usually larger and clinically labelled, data report far more modest performance (Table 3.2). Areas under the ROC curve of 0.72 to 0.84 are typical for electronic-health-record cohorts, and two recent reviews conclude that validation is inconsistent and the risk of bias is high {{ cite('12, 13') }}. The contrast with the 96–99.6% reported on the Kaggle questionnaire is itself a signal that the latter is an unusually easy benchmark.</p>
+<div class="tbl long">
+  {{ cap('3.2', 'Selected machine-learning studies on postpartum depression using other data.') }}
+  <table>
+    <thead><tr><th style="width:42mm">Study</th><th style="width:44mm">Data</th><th style="width:36mm">Result</th><th>Note</th></tr></thead>
+    <tbody>
+      <tr><td>Zhang et al., 2020 {{ cite('6') }}</td><td>508 women, China</td><td>AUC 0.78</td><td>Small cohort</td></tr>
+      <tr><td>Shin et al., 2020 {{ cite('7') }}</td><td>PRAMS survey, 28,755 records</td><td>Not extracted</td><td>PHQ-2 label</td></tr>
+      <tr><td>Amit et al., 2021 {{ cite('8') }}</td><td>266,544 UK primary-care records</td><td>AUC 0.72–0.74 (0.84 with EPDS)</td><td>Outcome from health records</td></tr>
+      <tr><td>Saqib et al., 2021 {{ cite('9') }}</td><td>Scoping review, 14 studies</td><td>AUC 0.78–0.93</td><td>SVM and random forest most common</td></tr>
+      <tr><td>Nakamura et al., 2024 {{ cite('10') }}</td><td>Japanese cohort</td><td>AUC 0.83</td><td>Single site</td></tr>
+      <tr><td>Huang et al., 2025 {{ cite('11') }}</td><td>1,065 women</td><td>AUC 0.955 (10-fold CV)</td><td>Eight algorithms with SHAP; internal validation only</td></tr>
+      <tr><td>Alkhateeb et al., 2026 {{ cite('12') }}</td><td>Scoping review, 65 studies</td><td>Not applicable</td><td>Classical ML dominant; inconsistent validation</td></tr>
+      <tr><td>Xia et al., 2025 {{ cite('13') }}</td><td>Systematic review</td><td>Not applicable</td><td>High risk of bias, limited generalisability</td></tr>
+    </tbody>
+  </table>
+</div>
+
+{{ h2('3.3') }}
+<p>Reading the two bodies of work together gives seven gaps. Each is a concrete thing that earlier studies on this dataset do not report and that this project adds.</p>
+<div class="tbl long">
+  {{ cap('3.3', 'Research gaps, the evidence for each, and how this project addresses it.') }}
+  <table>
+    <thead><tr><th style="width:9mm">Gap</th><th style="width:44mm">What is missing</th><th style="width:42mm">Evidence</th><th>What this project does</th><th style="width:19mm">Chapter</th></tr></thead>
+    <tbody>
+      <tr><td>G1</td><td>High accuracy from black-box models</td><td>Studies {{ cite('1–3') }} give no per-person explanation</td><td>Explains every prediction of the hybrid with SHAP and LIME</td><td>7</td></tr>
+      <tr><td>G2</td><td>XAI methods are shown, not compared</td><td>Study {{ cite('4') }} displays several XAI outputs</td><td>Measures SHAP against LIME on agreement, faithfulness, stability and speed</td><td>7</td></tr>
+      <tr><td>G3</td><td>No uncertainty: every prediction is given with full confidence</td><td>None of {{ cite('1–4') }} reports it</td><td>Calibration analysis and conformal prediction sets</td><td>6, 8</td></tr>
+      <tr><td>G4</td><td>No actionable explanation</td><td>None of {{ cite('1–4') }}</td><td>Counterfactual "what would have to change" example</td><td>8</td></tr>
+      <tr><td>G5</td><td>Superiority claimed without statistical tests</td><td>{{ cite('1–3') }} report single numbers</td><td>Friedman, Wilcoxon–Holm, McNemar and a bootstrap confidence interval</td><td>6</td></tr>
+      <tr><td>G6</td><td>Repeated answer patterns are not analysed</td><td>Not mentioned in any abstract</td><td>Reports standard results and duplicate-aware grouped validation</td><td>9</td></tr>
+      <tr><td>G7</td><td>No subgroup check</td><td>None of {{ cite('1–4') }}</td><td>Accuracy in every age group</td><td>8</td></tr>
+    </tbody>
+  </table>
+</div>
+
+{{ h2('3.4') }}
+<p>On raw accuracy this project is in the same range as the best earlier papers and does not claim to exceed the 99–99.6% ones. Its strength lies in what surrounds the number. Table 3.4 puts the two side by side.</p>
+<div class="tbl long">
+  {{ cap('3.4', 'Earlier studies on the dataset compared with this project.') }}
+  <table>
+    <thead><tr><th style="width:52mm">Aspect</th><th>Earlier studies {{ cite('1–5') }}</th><th>This project</th></tr></thead>
+    <tbody>
+      <tr><td>Accuracy, random split</td><td>{{ n.lit_low | f2 }}% – {{ n.lit_high | f1 }}%</td><td>Hybrid Stack {{ test[H].accuracy | f2 }}% (95% CI {{ n.ci }}%); CatBoost {{ test['CatBoost'].accuracy | f2 }}%; 10-fold CV {{ n.cv_low | f1 }}–{{ n.cv_high | f1 }}% for the six non-linear models</td></tr>
+      <tr><td>Confidence interval and tests</td><td>Not reported in the abstracts</td><td>Bootstrap CI, Friedman, Wilcoxon–Holm, McNemar</td></tr>
+      <tr><td>Explanation of each prediction</td><td>Only {{ cite('4') }}</td><td>SHAP and LIME for 100 test people</td></tr>
+      <tr><td>XAI methods measured against each other</td><td>None found</td><td>Agreement, faithfulness, stability, speed</td></tr>
+      <tr><td>Uncertainty of a prediction</td><td>None found</td><td>Conformal prediction and calibration</td></tr>
+      <tr><td>Counterfactual explanation</td><td>None found</td><td>Yes</td></tr>
+      <tr><td>Repeated answer patterns analysed</td><td>None found</td><td>Yes; grouped CV gives {{ robust[H].grouped | f1 }}% for the hybrid</td></tr>
+    </tbody>
+  </table>
+</div>
+</section>
+
+{# ================================================================== CHAPTER 4 #}
+{{ open_chapter('4', 'Where the data come from, what each question looks like, and the one property of the file that changes how every result must be read.') }}
+
+{{ h2('4.1') }}
+<p>The data are the public Kaggle dataset <i>PostPartum Depression</i> {{ cite('30') }}. According to its listing, the answers were collected with an online form at a medical hospital. The file has {{ '{:,}'.format(n.rows) }} rows and {{ n.columns }} columns: a timestamp, an age band and nine questionnaire items. Table 4.1 is the data card.</p>
+<div class="tbl long">
+  {{ cap('4.1', 'Data card.') }}
+  <table>
+    <thead><tr><th style="width:36mm">Property</th><th>Value</th></tr></thead>
+    <tbody>
+      <tr><td>Source</td><td>Kaggle, <i>PostPartum Depression</i>, uploader <code>parvezalmuqtadir2348</code></td></tr>
+      <tr><td>Collection</td><td>Per the listing: questionnaire given through an online form at a medical hospital</td></tr>
+      <tr><td>Size</td><td>{{ '{:,}'.format(n.rows) }} rows, {{ n.columns }} columns (timestamp, age band, nine items)</td></tr>
+      <tr><td>Timestamps</td><td>From {{ n.first_stamp }} to {{ n.last_stamp }}: all rows fall within {{ n.collection_hours | f1 }} hours</td></tr>
+      <tr><td>Target</td><td><i>Feeling anxious</i> (Yes / No), the target named on the listing</td></tr>
+      <tr><td>Features used</td><td>{{ n.features }}: age band and the eight remaining items</td></tr>
+      <tr><td>Missing values</td><td>{{ n.missing_cells }} cells in three columns, kept as a separate "No answer" category</td></tr>
+      <tr><td>Repeated rows</td><td>{{ '{:,}'.format(n.repeated_rows) }} rows repeat an earlier answer pattern; {{ n.unique_patterns }} patterns are unique</td></tr>
+      <tr><td>Licence</td><td>Listed as MIT in a search result for the Kaggle page; confirm on the page before redistribution</td></tr>
+      <tr><td>Sensitivity</td><td>Self-reported mental-health items, including a suicide-related question</td></tr>
+    </tbody>
+  </table>
+</div>
+<div class="box warn">
+  <div class="h">An observation about provenance</div>
+  <p>The timestamps place all {{ '{:,}'.format(n.rows) }} responses inside a single window of {{ n.collection_hours | f1 }} hours. The book does not speculate about why, but together with the repeated answer patterns it means the file should be treated as a benchmark of uncertain origin and not as a documented clinical sample.</p>
+</div>
+
+{{ h2('4.2') }}
+<p>All features are categorical with three or four possible answers. Table 4.2 lists every answer, how often it was given and the share of women giving it who also answered <i>Yes</i> to <i>Feeling anxious</i>.</p>
+<div class="tbl long">
+  {{ cap('4.2', 'Every feature, its answers, their frequency and the anxious rate among women who gave that answer.') }}
+  <table>
+    <thead><tr><th>Question</th><th style="width:44mm">Answer</th><th class="r" style="width:16mm">Count</th><th class="r" style="width:16mm">Share</th><th class="r" style="width:20mm">Anxious</th><th style="width:30mm"></th></tr></thead>
+    <tbody>
+      {% for q in questions %}{% for a in q.answers %}
+      <tr><td>{% if loop.first %}<b>{{ q.name }}</b>{% endif %}</td><td>{{ a.text }}</td><td class="r">{{ a.n }}</td><td class="r">{{ a.share | f1 }}%</td><td class="r">{{ a.anxious | f1 }}%</td><td><span class="bar" style="width:{{ a.anxious * 0.28 }}mm"></span></td></tr>
+      {% endfor %}{% endfor %}
+    </tbody>
+  </table>
+</div>
+{% set guilt = (questions | selectattr('name', 'equalto', 'Feeling of guilt') | list)[0].answers %}
+{% set g_no = (guilt | selectattr('text', 'equalto', 'No') | list)[0] %}{% set g_yes = (guilt | selectattr('text', 'equalto', 'Yes') | list)[0] %}{% set g_maybe = (guilt | selectattr('text', 'equalto', 'Maybe') | list)[0] %}
+<p>One pattern in the table deserves attention. For <i>Feeling of guilt</i>, {{ g_no.anxious | f1 }}% of the women who answered <i>No</i> report feeling anxious, against {{ g_maybe.anxious | f1 }}% for <i>Maybe</i> and only {{ g_yes.anxious | f1 }}% for <i>Yes</i> (Figure 4.1). The relationship is strong, which is why this question dominates every importance ranking later in the book, but its direction is the opposite of what clinical experience would suggest. It must be read as a property of this dataset, not as evidence about guilt and anxiety in general.</p>
+{{ figure('4.1', 'fig02_anxious_rate_by_guilt.png', 'Share of women answering <i>Yes</i> to <i>Feeling anxious</i>, by their answer to the guilt question.', 'narrow') }}
+
+{{ h2('4.3') }}
+<p>Only {{ n.missing_cells }} of the cells are empty: {% for k, v in n.missing.items() %}{{ v }} in <i>{{ k }}</i>{% if not loop.last %}{{ ', ' if loop.revindex > 2 else ' and ' }}{% endif %}{% endfor %}. They are not imputed. A skipped question can itself carry information, so every empty cell becomes its own answer category, "No answer". No row is dropped.</p>
+
+{{ h2('4.4') }}
+<p>The target is the answer to <i>Feeling anxious</i>. Of the {{ '{:,}'.format(n.rows) }} women, {{ n.anxious }} ({{ n.anxious_share | f1 }}%) answered <i>Yes</i> and {{ n.not_anxious }} ({{ (100 - n.anxious_share) | f1 }}%) answered <i>No</i> (Figure 4.2). The imbalance is moderate, about two to one. A model that always answered "anxious" would be right {{ n.anxious_share | f1 }}% of the time, which is the floor any useful model must clear. Because of the imbalance, the study reports balanced accuracy, recall, specificity, F1 and the Matthews correlation coefficient next to plain accuracy.</p>
+{{ figure('4.2', 'fig01_class_balance.png', 'Class balance of the target.', 'narrow') }}
+
+{{ h2('4.5') }}
+<p>Cramér's V measures how strongly two categorical variables are associated, from 0 (none) to 1 (perfect). Figure 4.3 shows it for each question against the target. <i>Feeling of guilt</i> stands well above the rest. No single question comes close to determining the target, so a model has to combine answers to do well, which is why the linear baseline falls far behind the tree-based models in Chapter 6.</p>
+{{ figure('4.3', 'fig03_cramers_v.png', 'Cramér\'s V between each question and the target.') }}
+
+{{ h2('4.6') }}
+<p>This is the most important property of the dataset. Ignoring the timestamp, the {{ '{:,}'.format(n.rows) }} rows contain only <strong>{{ n.unique_patterns }} distinct answer patterns</strong>. The remaining {{ '{:,}'.format(n.repeated_rows) }} rows ({{ (n.repeated_rows / n.rows * 100) | f1 }}%) are exact repeats of a pattern that occurs earlier in the file. The most frequent pattern appears {{ n.largest_pattern }} times, and only {{ n.patterns_seen_once }} pattern{{ '' if n.patterns_seen_once == 1 else 's' }} appear{{ 's' if n.patterns_seen_once == 1 else '' }} exactly once, so almost every pattern in the file has at least one copy.</p>
+<p>A second fact makes the repeats decisive: <strong>{% if n.mixed_label_patterns == 0 %}no feature pattern occurs with both target values{% else %}only {{ n.mixed_label_patterns }} feature patterns occur with both target values{% endif %}</strong>. Whenever two women gave the same nine answers, they also gave the same answer to <i>Feeling anxious</i>. A model that simply memorised every training pattern together with its label would therefore be right on every test row whose pattern it had already seen. Chapter 9 measures how many test rows that is and what happens to accuracy when it is prevented.</p>
+<div class="box">
+  <div class="h">Why the rows are kept</div>
+  <p>The study does not delete the repeated rows. Earlier papers used all {{ '{:,}'.format(n.rows) }} rows with a random split, so the same protocol is needed for a fair comparison. The repeats are handled by reporting a second, duplicate-aware validation next to the standard one.</p>
+</div>
+
+{{ h2('4.7') }}
+<p>The data contain self-reported mental-health answers, including a question about suicide attempt. They are public and carry no direct identifiers, but they remain sensitive. Three rules follow for this project: the raw file is never modified; results are reported only in aggregate, with individual explanations shown for anonymous test rows; and nothing in this book is a diagnostic tool or may be used to assess an individual.</p>
+</section>
+
+{# ================================================================== CHAPTER 5 #}
+{{ open_chapter('5', 'Every step of the study, from the raw file to the final robustness check, with the reasons for each design decision.') }}
+
+{{ h2('5.1') }}
+<p>The study is one notebook of {{ n.task_count }} small tasks in ten parts. Figure 5.1 shows the flow. Every step that learns something from data (encoding, tuning, stacking) learns it from training data only.</p>
+<figure>
+  <svg viewBox="0 0 760 318" role="img">
+    {{ arrowdef }}
+    {% set row1 = [('Raw survey', [n.rows ~ ' responses', n.columns ~ ' columns']), ('Clean', ['drop timestamp', '"No answer" category']), ('Split', [n.train_n ~ ' train', n.test_n ~ ' test, stratified']), ('Seven models', ['one-hot inside', 'each pipeline']), ('Tune', ['Optuna, 25 trials', '3-fold CV on train'])] %}
+    {% set row2 = [('Compare', ['10-fold CV', 'on the training set']), ('Final test', ['held-out 20%', 'used once']), ('Statistics', ['Friedman, Wilcoxon,', 'McNemar, bootstrap']), ('Explain', ['SHAP vs LIME', '100 test people']), ('Trust & audit', ['conformal, fairness,', 'grouped CV'])] %}
+    <text x="0" y="14" font-size="10.5" font-weight="600" fill="#eb6834" letter-spacing="1.5">BUILD</text>
+    {% for title, lines in row1 %}
+      {{ svgbox(loop.index0 * 154, 24, 136, 76, title, lines, fill='#f3f6fb') }}
+      {% if not loop.last %}<line x1="{{ loop.index0 * 154 + 138 }}" y1="62" x2="{{ loop.index0 * 154 + 152 }}" y2="62" stroke="#55607a" stroke-width="1.3" marker-end="url(#ah)"/>{% endif %}
+    {% endfor %}
+    <path d="M684 100 L684 132 L68 132 L68 164" fill="none" stroke="#55607a" stroke-width="1.3" marker-end="url(#ah)"/>
+    <text x="0" y="158" font-size="10.5" font-weight="600" fill="#eb6834" letter-spacing="1.5">EVALUATE</text>
+    {% for title, lines in row2 %}
+      {{ svgbox(loop.index0 * 154, 168, 136, 76, title, lines, fill='#ffffff', stroke=('#eb6834' if loop.last else '#2a78d6')) }}
+      {% if not loop.last %}<line x1="{{ loop.index0 * 154 + 138 }}" y1="206" x2="{{ loop.index0 * 154 + 152 }}" y2="206" stroke="#55607a" stroke-width="1.3" marker-end="url(#ah)"/>{% endif %}
+    {% endfor %}
+    <rect x="0" y="266" width="752" height="44" rx="6" fill="#12305a"/>
+    <text x="376" y="285" text-anchor="middle" font-size="11.5" font-weight="600" fill="#ffffff">Outputs: result tables (CSV) and figures (PNG) in results/</text>
+    <text x="376" y="301" text-anchor="middle" font-size="10.5" fill="#b9cbe4">fixed seed 42 · pinned library versions · raw data never modified</text>
+  </svg>
+  <figcaption><b>Figure 5.1.</b> The study pipeline. The upper row builds the models; the lower row evaluates them. The last box contains the duplicate audit that the rest of the book depends on.</figcaption>
+</figure>
+
+{{ h2('5.2') }}
+<ul>
+  <li><strong>Cleaning.</strong> The timestamp is dropped because it carries no clinical meaning and could leak the order of data entry. Empty cells become the category "No answer".</li>
+  <li><strong>Target.</strong> <i>Feeling anxious</i> is coded 1 for <i>Yes</i> and 0 for <i>No</i>.</li>
+  <li><strong>Encoding.</strong> Each answer is first given an integer code, which keeps the data compact and lets the explanation methods work on the original nine questions. Inside every model pipeline the codes are then <strong>one-hot encoded</strong>, so no model is told that "Sometimes" lies numerically between "No" and "Yes". Because the encoder is part of the pipeline, it is refitted inside each cross-validation fold and never sees validation data.</li>
+  <li><strong>Split.</strong> A stratified 80/20 split with seed 42 gives {{ '{:,}'.format(n.train_n) }} training and {{ n.test_n }} test people, both with {{ n.anxious_share | f1 }}% anxious answers. The test set is used once, at the end.</li>
+  <li><strong>No scaling, no resampling.</strong> All inputs are one-hot indicators, so scaling is unnecessary. The two-to-one class ratio is handled by reporting imbalance-aware metrics instead of by synthetic oversampling, which would create further near-duplicate rows.</li>
+</ul>
+
+{{ h2('5.3') }}
+<p>Seven models were chosen to cover the main families in the literature on this dataset, from a transparent baseline to the proposed hybrid. Table 5.1 lists their settings.</p>
+<div class="tbl long">
+  {{ cap('5.1', 'The seven competing models and their settings. All use one-hot encoding inside a pipeline and random seed 42.') }}
+  <table>
+    <thead><tr><th style="width:8mm">#</th><th style="width:32mm">Model</th><th style="width:24mm">Family</th><th>Settings</th><th style="width:48mm">Why it is included</th></tr></thead>
+    <tbody>
+      <tr><td>1</td><td>Logistic Regression</td><td>Linear</td><td>max_iter 2000, default L2 penalty</td><td>Transparent baseline; shows what a model without interactions can do</td></tr>
+      <tr><td>2</td><td>Random Forest</td><td>Bagging</td><td>300 trees</td><td>Strong, stable classic</td></tr>
+      <tr><td>3</td><td>XGBoost</td><td>Boosting</td><td>Tuned: {{ n.xgb_params.n_estimators }} trees, depth {{ n.xgb_params.max_depth }}, learning rate {{ n.xgb_params.learning_rate | f3 }}, subsample {{ n.xgb_params.subsample | f2 }}, column sample {{ n.xgb_params.colsample_bytree | f2 }}</td><td>Most widely used boosting model in health-ML papers</td></tr>
+      <tr><td>4</td><td>LightGBM</td><td>Boosting</td><td>Tuned: {{ n.lgbm_params.n_estimators }} trees, {{ n.lgbm_params.num_leaves }} leaves, learning rate {{ n.lgbm_params.learning_rate | f3 }}, min. child samples {{ n.lgbm_params.min_child_samples }}, column sample {{ n.lgbm_params.colsample_bytree | f2 }}</td><td>Faster, leaf-wise boosting</td></tr>
+      <tr><td>5</td><td>CatBoost</td><td>Boosting</td><td>400 iterations, depth 6, learning rate 0.1</td><td>Boosting designed for categorical data</td></tr>
+      <tr><td>6</td><td>MLP Neural Net</td><td>Neural network</td><td>Hidden layers of 64 and 32 units, up to 1000 iterations</td><td>Represents deep learning</td></tr>
+      <tr class="hl"><td>7</td><td>Hybrid Stack (proposed)</td><td>Stacking</td><td>Base: CatBoost, XGBoost, Random Forest, MLP. Meta: logistic regression on out-of-fold probabilities, cv = 5</td><td>Combines four families that make different mistakes</td></tr>
+    </tbody>
+  </table>
+</div>
+
+{{ h2('5.4') }}
+<p>Figure 5.2 shows the architecture of the proposed model. The four base models were chosen for diversity: two boosting models with different tree-growing strategies, one bagging model and one neural network. LightGBM is left out of the stack because it is the closest relative of XGBoost and would add little diversity. The meta-learner is deliberately simple. A logistic regression on four probabilities has five parameters, so it cannot overfit the way a deep meta-learner could, and its weights can be read directly.</p>
+<figure>
+  <svg viewBox="0 0 760 300" role="img">
+    {{ arrowdef }}
+    {{ svgbox(0, 110, 128, 80, 'Answers', ['9 questions', 'one-hot encoded'], fill='#f3f6fb') }}
+    {% for name, sub in [('CatBoost', 'boosting, categorical'), ('XGBoost', 'boosting, tuned'), ('Random Forest', 'bagging, 300 trees'), ('MLP', 'neural net, 64-32')] %}
+      {{ svgbox(206, 6 + loop.index0 * 74, 150, 58, name, [sub]) }}
+      <line x1="128" y1="150" x2="204" y2="{{ 35 + loop.index0 * 74 }}" stroke="#55607a" stroke-width="1.1" marker-end="url(#ah)"/>
+      <line x1="356" y1="{{ 35 + loop.index0 * 74 }}" x2="430" y2="{{ 126 + loop.index0 * 16 }}" stroke="#55607a" stroke-width="1.1" marker-end="url(#ah)"/>
+    {% endfor %}
+    {{ svgbox(432, 100, 150, 100, 'Meta-learner', ['logistic regression', 'trained on out-of-fold', 'probabilities (cv = 5)'], fill='#fff3ec', stroke='#eb6834') }}
+    <line x1="582" y1="150" x2="634" y2="150" stroke="#55607a" stroke-width="1.3" marker-end="url(#ah)"/>
+    {{ svgbox(636, 110, 116, 80, 'P(anxious)', ['flag if ≥ 0.5'], fill='#12305a', stroke='#12305a', tcolor='#ffffff', lcolor='#b9cbe4') }}
+    <text x="281" y="296" text-anchor="middle" font-size="10.5" font-weight="600" fill="#2a78d6">LEVEL 0 · base models</text>
+    <text x="507" y="296" text-anchor="middle" font-size="10.5" font-weight="600" fill="#eb6834">LEVEL 1 · combiner</text>
+  </svg>
+  <figcaption><b>Figure 5.2.</b> Architecture of the Hybrid Stack. Each base model outputs a probability; the meta-learner is trained only on probabilities that each base model produced for people it had not been trained on.</figcaption>
+</figure>
+<p>Training proceeds in three steps. First, the training set is cut into five folds, and each base model is trained five times, each time predicting the fold that was held back. This yields one honest probability per person per base model. Second, the logistic regression is fitted on those four columns of probabilities. Third, each base model is refitted on the whole training set for use at prediction time.</p>
+
+{{ h2('5.5') }}
+<p>XGBoost and LightGBM are sensitive to their settings and were tuned with Optuna {{ cite('22') }}, a Bayesian optimiser that proposes each new setting from the results of the earlier ones (a tree-structured Parzen estimator, seeded for reproducibility). Each model received 25 trials, and each trial was scored by three-fold cross-validation on the training set only. Table 5.2 gives the search ranges. The other models use fixed, conventional settings, which keeps the search modest and the risk of overfitting the validation folds low.</p>
+<div class="tbl long">
+  {{ cap('5.2', 'Hyper-parameter search space and the values selected.') }}
+  <table>
+    <thead><tr><th style="width:26mm">Model</th><th>Hyper-parameter</th><th style="width:40mm">Search range</th><th class="r" style="width:30mm">Selected</th></tr></thead>
+    <tbody>
+      <tr><td><b>XGBoost</b></td><td>Number of trees</td><td>100 – 500</td><td class="r">{{ n.xgb_params.n_estimators }}</td></tr>
+      <tr><td></td><td>Maximum depth</td><td>3 – 10</td><td class="r">{{ n.xgb_params.max_depth }}</td></tr>
+      <tr><td></td><td>Learning rate</td><td>0.02 – 0.3 (log scale)</td><td class="r">{{ n.xgb_params.learning_rate | f3 }}</td></tr>
+      <tr><td></td><td>Row subsample</td><td>0.6 – 1.0</td><td class="r">{{ n.xgb_params.subsample | f3 }}</td></tr>
+      <tr><td></td><td>Column subsample per tree</td><td>0.6 – 1.0</td><td class="r">{{ n.xgb_params.colsample_bytree | f3 }}</td></tr>
+      <tr><td><b>LightGBM</b></td><td>Number of trees</td><td>100 – 500</td><td class="r">{{ n.lgbm_params.n_estimators }}</td></tr>
+      <tr><td></td><td>Number of leaves</td><td>8 – 64</td><td class="r">{{ n.lgbm_params.num_leaves }}</td></tr>
+      <tr><td></td><td>Learning rate</td><td>0.02 – 0.3 (log scale)</td><td class="r">{{ n.lgbm_params.learning_rate | f3 }}</td></tr>
+      <tr><td></td><td>Minimum samples per leaf</td><td>1 – 20</td><td class="r">{{ n.lgbm_params.min_child_samples }}</td></tr>
+      <tr><td></td><td>Column subsample per tree</td><td>0.6 – 1.0</td><td class="r">{{ n.lgbm_params.colsample_bytree | f3 }}</td></tr>
+    </tbody>
+  </table>
+</div>
+
+{{ h2('5.6') }}
+<p>Figure 5.3 shows how the data are used. Three layers of validation keep model selection apart from the final measurement.</p>
+<figure>
+  <svg viewBox="0 0 760 232" role="img">
+    <text x="0" y="14" font-size="11" font-weight="600" fill="#12305a">All {{ n.rows }} responses</text>
+    <rect x="0" y="22" width="604" height="30" rx="4" fill="#2a78d6"/><text x="302" y="42" text-anchor="middle" font-size="11.5" font-weight="600" fill="#fff">Training set · {{ n.train_n }} people (80%)</text>
+    <rect x="610" y="22" width="150" height="30" rx="4" fill="#eb6834"/><text x="685" y="42" text-anchor="middle" font-size="11.5" font-weight="600" fill="#fff">Test · {{ n.test_n }} (20%)</text>
+    <text x="0" y="82" font-size="11" font-weight="600" fill="#12305a">1 · Tuning: 3-fold CV inside the training set (Optuna, 25 trials per model)</text>
+    {% for i in range(3) %}<rect x="{{ i * 202 }}" y="90" width="198" height="20" rx="3" fill="{{ '#9ec5f5' if i == 1 else '#dbe7f7' }}"/>{% endfor %}
+    <text x="0" y="140" font-size="11" font-weight="600" fill="#12305a">2 · Model comparison: 10-fold stratified CV inside the training set</text>
+    {% for i in range(10) %}<rect x="{{ i * 60.6 }}" y="148" width="56.6" height="20" rx="3" fill="{{ '#9ec5f5' if i == 3 else '#dbe7f7' }}"/>{% endfor %}
+    <text x="0" y="198" font-size="11" font-weight="600" fill="#12305a">3 · Final measurement: every model refitted on all training data, tested once</text>
+    <rect x="0" y="206" width="604" height="20" rx="3" fill="#dbe7f7"/><rect x="610" y="206" width="150" height="20" rx="3" fill="#eb6834"/>
+    <text x="685" y="100" text-anchor="middle" font-size="10" fill="#9aa0a6">not touched</text>
+    <text x="685" y="158" text-anchor="middle" font-size="10" fill="#9aa0a6">not touched</text>
+    <text x="685" y="220" text-anchor="middle" font-size="10" font-weight="600" fill="#fff">used once</text>
+  </svg>
+  <figcaption><b>Figure 5.3.</b> Validation protocol. The darker fold in each row is the one held out in that round. The test set stays untouched until the last step.</figcaption>
+</figure>
+<ul>
+  <li><strong>Tuning</strong> uses three-fold cross-validation on the training set.</li>
+  <li><strong>Comparison</strong> uses ten-fold stratified cross-validation on the training set. Ten accuracies per model give a mean, a standard deviation and paired samples for the statistical tests.</li>
+  <li><strong>Final measurement</strong> refits each model on the full training set and evaluates it once on the {{ n.test_n }} test people.</li>
+</ul>
+
+{{ h2('5.7') }}
+<p>With TP, TN, FP and FN the counts of true positives, true negatives, false positives and false negatives, the study reports the following.</p>
+<div class="tbl long">
+  {{ cap('5.3', 'Performance metrics used in the study.') }}
+  <table>
+    <thead><tr><th style="width:36mm">Metric</th><th style="width:58mm">Definition</th><th>What it tells the reader</th></tr></thead>
+    <tbody>
+      <tr><td>Accuracy</td><td>(TP + TN) / all</td><td>Share of all people classified correctly</td></tr>
+      <tr><td>Balanced accuracy</td><td>(recall + specificity) / 2</td><td>Accuracy that is not inflated by the larger class</td></tr>
+      <tr><td>Precision</td><td>TP / (TP + FP)</td><td>Of those flagged anxious, how many are</td></tr>
+      <tr><td>Recall (sensitivity)</td><td>TP / (TP + FN)</td><td>Of the anxious women, how many are found; the key number for screening</td></tr>
+      <tr><td>Specificity</td><td>TN / (TN + FP)</td><td>Of the not-anxious women, how many are correctly cleared</td></tr>
+      <tr><td>F1</td><td>Harmonic mean of precision and recall</td><td>One number balancing the two</td></tr>
+      <tr><td>MCC</td><td>Correlation between prediction and truth, from &minus;1 to 1</td><td>Robust summary under class imbalance</td></tr>
+      <tr><td>ROC-AUC</td><td>Area under the ROC curve</td><td>How well probabilities rank anxious above not-anxious, at every threshold</td></tr>
+      <tr><td>Brier score</td><td>Mean of (probability &minus; outcome)<sup>2</sup></td><td>Quality of the probabilities themselves; lower is better</td></tr>
+    </tbody>
+  </table>
+</div>
+
+{{ h2('5.8') }}
+<p>Four procedures test whether observed differences are real. They follow the recommendations of Demšar for comparing several classifiers {{ cite('26') }}.</p>
+<ul>
+  <li><strong>Friedman test</strong> on the ten fold accuracies of all seven models: is there any difference among the models at all?</li>
+  <li><strong>Wilcoxon signed-rank tests</strong>, Hybrid Stack against each other model on the same ten folds, with <strong>Holm correction</strong> for the six comparisons.</li>
+  <li><strong>McNemar test</strong> (exact binomial form) on the test set: of the people on whom two models disagree, does one model win more often than chance would allow?</li>
+  <li><strong>Bootstrap confidence interval</strong>: the {{ n.test_n }} test outcomes are resampled 2,000 times to give a 95% interval for the hybrid's test accuracy.</li>
+</ul>
+
+{{ h2('5.9') }}
+<p>The Hybrid Stack is explained for the first 100 test people. SHAP is computed exactly against a background of 30 randomly chosen training people. LIME uses 1,000 perturbed samples per person and treats all features as categorical. The two are then compared on four criteria.</p>
+<div class="tbl long">
+  {{ cap('5.4', 'The four criteria on which SHAP and LIME are compared.') }}
+  <table>
+    <thead><tr><th style="width:26mm">Criterion</th><th>How it is measured</th><th style="width:46mm">Better when</th></tr></thead>
+    <tbody>
+      <tr><td>Agreement</td><td>Spearman rank correlation of global importance; mean per-person rank correlation; share of people with the same top question; overlap of the top three; share of contributions with the same sign</td><td>Higher: the two tell the same story</td></tr>
+      <tr><td>Faithfulness</td><td>Deletion test: replace a person's top 1, 2 or 3 questions (as ranked by the method) with the answers of the 30 background people and record the mean absolute change in predicted probability. Random choice of questions is the reference</td><td>Higher: the method found the answers that really move the model</td></tr>
+      <tr><td>Stability</td><td>Repeat the explanation for 20 people with different background people (SHAP) or a different random seed (LIME); Spearman correlation between the two runs</td><td>Higher: the same person gets the same explanation twice</td></tr>
+      <tr><td>Cost</td><td>Seconds per explained person</td><td>Lower</td></tr>
+    </tbody>
+  </table>
+</div>
+<p>As a cross-check that does not depend on either method, <strong>permutation importance</strong> is computed for all seven models: one question at a time is shuffled in the test set and the loss of accuracy is recorded.</p>
+
+{{ h2('5.10') }}
+<ul>
+  <li><strong>Calibration.</strong> A reliability curve with eight quantile bins and the Brier score.</li>
+  <li><strong>Conformal prediction.</strong> Out-of-fold probabilities of the hybrid on the training set give the calibration scores, <i>s</i> = 1 &minus; <i>p</i>(true class). For a target error rate &alpha;, the threshold <i>q</i> is the &lceil;(<i>n</i> + 1)(1 &minus; &alpha;)&rceil; / <i>n</i> quantile of those scores, and a class enters a test person's prediction set if 1 &minus; <i>p</i>(class) &le; <i>q</i>. Targets of 90%, 95% and 99% are evaluated.</li>
+  <li><strong>Counterfactual.</strong> For one test person flagged anxious, an exhaustive search over all single-answer changes (and pairs, if no single change suffices) finds every change that brings the probability below 0.5. Age is excluded because it cannot be changed.</li>
+  <li><strong>Subgroup check.</strong> Test accuracy of the hybrid in each of the five age bands.</li>
+</ul>
+
+{{ h2('5.11') }}
+<p>The last part of the study addresses the repeated answer patterns of Section 4.6 in two ways. First, the test set is divided into people whose exact pattern also occurs in the training set ("twins") and people whose pattern does not, and accuracy is computed separately. Second, all seven models are re-evaluated with <strong>grouped five-fold cross-validation</strong> on the full dataset: every answer pattern is a group, and each group falls entirely into one fold. Figure 5.4 illustrates the difference.</p>
+<figure>
+  <svg viewBox="0 0 760 214" role="img">
+    {% set colours = ['#2a78d6', '#eb6834', '#2e9e6b', '#8a5cc7', '#d4a017'] %}
+    <text x="0" y="14" font-size="11.5" font-weight="600" fill="#12305a">Random split: copies of the same pattern land on both sides</text>
+    <rect x="0" y="24" width="520" height="62" rx="5" fill="#f3f6fb" stroke="#d9dee8"/><rect x="540" y="24" width="220" height="62" rx="5" fill="#fff5ef" stroke="#f3c7b3"/>
+    <text x="10" y="40" font-size="9.5" fill="#55607a">TRAIN</text><text x="550" y="40" font-size="9.5" fill="#55607a">TEST</text>
+    {% for c in [0,1,2,0,3,1,0,4,2,1,3,0,2,4,1] %}<circle cx="{{ 26 + loop.index0 * 33 }}" cy="62" r="10" fill="{{ colours[c] }}"/>{% endfor %}
+    {% for c in [0,1,2,3,0,1] %}<circle cx="{{ 566 + loop.index0 * 33 }}" cy="62" r="10" fill="{{ colours[c] }}"/>{% endfor %}
+    <text x="0" y="122" font-size="11.5" font-weight="600" fill="#12305a">Grouped split: each pattern lives on one side only</text>
+    <rect x="0" y="132" width="520" height="62" rx="5" fill="#f3f6fb" stroke="#d9dee8"/><rect x="540" y="132" width="220" height="62" rx="5" fill="#fff5ef" stroke="#f3c7b3"/>
+    <text x="10" y="148" font-size="9.5" fill="#55607a">TRAIN</text><text x="550" y="148" font-size="9.5" fill="#55607a">TEST</text>
+    {% for c in [0,0,0,0,0,1,1,1,1,1,2,2,2,2,0] %}<circle cx="{{ 26 + loop.index0 * 33 }}" cy="170" r="10" fill="{{ colours[c] }}"/>{% endfor %}
+    {% for c in [3,3,3,4,4,4] %}<circle cx="{{ 566 + loop.index0 * 33 }}" cy="170" r="10" fill="{{ colours[c] }}"/>{% endfor %}
+    <text x="0" y="210" font-size="10" fill="#55607a">Each colour is one answer pattern. In the grouped split the model is tested only on colours it has never seen.</text>
+  </svg>
+  <figcaption><b>Figure 5.4.</b> Random versus grouped splitting when a dataset contains repeated answer patterns.</figcaption>
+</figure>
+
+{{ h2('5.12') }}
+<p>The study runs on Python {{ n.python }} with the library versions in Table 5.5. All random processes use seed 42. The complete run takes a few minutes on a laptop. Appendix A gives the exact commands.</p>
+<div class="tbl">
+  {{ cap('5.5', 'Pinned library versions.') }}
+  <table>
+    <thead><tr>{% for i in range(3) %}<th>Library</th><th class="r">Version</th>{% endfor %}</tr></thead>
+    <tbody>
+      {% for row in requirements | batch(3, '') %}
+      <tr>{% for item in row %}{% if item %}<td>{{ item.split('==')[0] }}</td><td class="r">{{ item.split('==')[1] }}</td>{% else %}<td></td><td></td>{% endif %}{% endfor %}</tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+</section>
+
+{# ================================================================== CHAPTER 6 #}
+{{ open_chapter('6', 'Seven models, one protocol: who wins, by how much, and whether the margin means anything.') }}
+
+{{ h2('6.1') }}
+<p>Figure 6.1 shows the best three-fold accuracy found by Optuna after each trial. Both searches improve quickly and then flatten, which indicates that 25 trials were enough for this small problem. The best settings reached {{ n.xgb_best_cv | f2 }}% (XGBoost) and {{ n.lgbm_best_cv | f2 }}% (LightGBM) in three-fold cross-validation. These tuning scores are lower than the ten-fold scores reported next because each three-fold model is trained on only two thirds of the training set.</p>
+{{ figure('6.1', 'fig04_optuna_progress.png', 'Best three-fold cross-validation accuracy after each Optuna trial.') }}
+
+{{ h2('6.2') }}
+<p>Table 6.1 and Figure 6.2 give the ten-fold cross-validation results on the training set. Six models lie between {{ n.cv_low | f2 }}% and {{ n.cv_high | f2 }}%, a spread of {{ (n.cv_high - n.cv_low) | f2 }} points that is smaller than the fold-to-fold standard deviation of any one of them. Logistic regression is far behind at {{ cv['Logistic Regression'].mean | f2 }}%, which confirms that the target depends on combinations of answers that a linear model cannot represent.</p>
+<div class="tbl">
+  {{ cap('6.1', 'Ten-fold stratified cross-validation accuracy on the training set.') }}
+  <table>
+    <thead><tr><th>Model</th><th class="r" style="width:30mm">Mean accuracy</th><th class="r" style="width:30mm">Std. deviation</th><th style="width:60mm"></th></tr></thead>
+    <tbody>
+      {% for m in cv.keys() %}
+      <tr{% if m == H %} class="hl"{% endif %}><td>{{ m }}</td><td class="r">{{ cv[m].mean | f2 }}%</td><td class="r">&plusmn; {{ cv[m].std | f2 }}</td><td><span class="bar{{ ' o' if m == H else '' }}" style="width:{{ (cv[m].mean - 75) * 2.2 }}mm"></span></td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  <div class="note">Bars start at 75% to make the differences among the top six visible.</div>
+</div>
+{{ figure('6.2', 'fig05_cv_accuracy.png', 'Mean ten-fold cross-validation accuracy; the error bar is the standard deviation across folds.') }}
+
+{{ h2('6.3') }}
+<p>Each model was then refitted on the full training set and evaluated once on the {{ n.test_n }} held-out people ({{ n.test_anxious }} anxious, {{ n.test_not_anxious }} not anxious). Table 6.2 gives all nine metrics.</p>
+<div class="tbl">
+  {{ cap('6.2', 'Test-set performance of the seven models. Accuracy, balanced accuracy, precision, recall, specificity and F1 in percent.') }}
+  <table>
+    <thead><tr><th>Model</th><th class="r">Acc.</th><th class="r">Bal. acc.</th><th class="r">Prec.</th><th class="r">Recall</th><th class="r">Spec.</th><th class="r">F1</th><th class="r">MCC</th><th class="r">AUC</th><th class="r">Brier</th></tr></thead>
+    <tbody>
+      {% for m in models %}{% set t = test[m] %}
+      <tr{% if m == H %} class="hl"{% endif %}><td>{{ m }}</td><td class="r">{{ t.accuracy | f2 }}</td><td class="r">{{ t.balanced_accuracy | f2 }}</td><td class="r">{{ t.precision | f2 }}</td><td class="r">{{ t.recall | f2 }}</td><td class="r">{{ t.specificity | f2 }}</td><td class="r">{{ t.f1 | f2 }}</td><td class="r">{{ t.mcc | f3 }}</td><td class="r">{{ t.roc_auc | f3 }}</td><td class="r">{{ t.brier | f3 }}</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{{ figure('6.3', 'fig06_test_accuracy.png', 'Test accuracy of every model. The proposed Hybrid Stack is shown in orange; the dashed line marks 97%.') }}
+<p>Three points stand out.</p>
+<ul>
+  <li><strong>{{ n.above_97 }} of the seven models exceed 97%.</strong> CatBoost classifies all {{ n.test_n }} test people correctly, the random forest misses {{ confusion['Random Forest'].fn + confusion['Random Forest'].fp }}, and the Hybrid Stack and the MLP each miss {{ n.hybrid_errors }}.</li>
+  <li><strong>The Hybrid Stack reaches {{ test[H].accuracy | f2 }}%</strong> with a 95% bootstrap confidence interval of {{ n.ci }}%. The interval is more than two points wide, so test accuracies that differ by a point or less cannot be told apart on a test set of this size.</li>
+  <li><strong>The hybrid's probabilities are among the best.</strong> Its Brier score of {{ test[H].brier | f3 }} is second only to CatBoost's {{ test['CatBoost'].brier | f3 }} and less than half that of the random forest ({{ test['Random Forest'].brier | f3 }}), although the forest has slightly higher accuracy. The meta-learner sharpens the probabilities of its base models.</li>
+</ul>
+<div class="box warn">
+  <div class="h">CatBoost scores 100%. Is that a problem?</div>
+  <p>On its own it is not an error in the code: the split, the pipeline and the test are clean. It is, however, not evidence of a perfect model. Chapter 9 shows that {{ n.twin_share | f1 }}% of the test people have an exact copy of their answers in the training set, and that CatBoost's accuracy on unseen patterns is {{ robust['CatBoost'].grouped | f1 }}%. The honest headline for CatBoost is its cross-validation result, {{ cv['CatBoost'].mean | f2 }}% &plusmn; {{ cv['CatBoost'].std | f2 }}, reported together with the grouped figure.</p>
+</div>
+
+{{ h2('6.4') }}
+<p>Figure 6.4 compares training and test accuracy. All six non-linear models reach {{ n.nonlinear_train_min | f2 }}% on the training set, and their test accuracy is at most {{ n.max_gap | f2 }} points lower (Table 6.3). A gap this small would normally indicate little overfitting. Here it must be read with the duplicates in mind: the test set looks like the training set because much of it <i>is</i> the training set. The grouped validation in Chapter 9 is the proper overfitting check.</p>
+<div class="tbl">
+  {{ cap('6.3', 'Training accuracy, test accuracy and the gap between them (percentage points).') }}
+  <table>
+    <thead><tr><th>Model</th><th class="r" style="width:32mm">Train accuracy</th><th class="r" style="width:32mm">Test accuracy</th><th class="r" style="width:24mm">Gap</th></tr></thead>
+    <tbody>
+      {% for m in models %}
+      <tr{% if m == H %} class="hl"{% endif %}><td>{{ m }}</td><td class="r">{{ gap[m].train_accuracy | f2 }}%</td><td class="r">{{ gap[m].test_accuracy | f2 }}%</td><td class="r">{{ gap[m].gap | f2 }}</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{{ figure('6.4', 'fig07_train_vs_test.png', 'Training accuracy (grey) and test accuracy (blue) of every model.') }}
+
+{{ h2('6.5') }}
+<p>The ROC curves (Figure 6.5) of the six non-linear models hug the top-left corner, with areas between {{ n.auc_low | f3 }} and {{ n.auc_high | f3 }}. Logistic regression reaches {{ test['Logistic Regression'].roc_auc | f3 }}.</p>
+{{ figure('6.5', 'fig08_roc_curves.png', 'ROC curves on the test set. The Hybrid Stack is drawn with a thicker line.') }}
+<p>Table 6.4 gives the confusion matrix of every model, and Figure 6.6 shows the hybrid's. A notable pattern is that <strong>none of the six non-linear models produces a single false positive</strong>: every error is a missed anxious woman. The Hybrid Stack misses {{ confusion[H].fn }} of {{ n.test_anxious }} (recall {{ test[H].recall | f2 }}%). For a screening tool this is the less desirable kind of error, and Section 11.3 returns to it: the decision threshold of 0.5 could be lowered to trade a few false alarms for fewer misses.</p>
+<div class="tbl">
+  {{ cap('6.4', 'Confusion-matrix counts on the ' ~ n.test_n ~ ' test people.') }}
+  <table>
+    <thead><tr><th>Model</th><th class="r">True negative</th><th class="r">False positive</th><th class="r">False negative</th><th class="r">True positive</th><th class="r">Errors</th></tr></thead>
+    <tbody>
+      {% for m in models %}{% set c = confusion[m] %}
+      <tr{% if m == H %} class="hl"{% endif %}><td>{{ m }}</td><td class="r">{{ c.tn }}</td><td class="r">{{ c.fp }}</td><td class="r">{{ c.fn }}</td><td class="r">{{ c.tp }}</td><td class="r">{{ c.fp + c.fn }}</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+<figure class="pair">
+  <img src="{{ fig('fig09_confusion_matrix.png') }}" alt=""><img src="{{ fig('fig10_calibration.png') }}" alt="">
+  <figcaption><b>Figure 6.6.</b> Left: confusion matrix of the Hybrid Stack. Right: its calibration curve; points on the dashed diagonal mean that predicted probabilities match observed rates.</figcaption>
+</figure>
+<p>The calibration curve lies close to the diagonal. Most predictions sit at the two ends, near 0 and near 1, which reflects how confidently the model separates the classes on this data.</p>
+
+{{ h2('6.6') }}
+<p>The Friedman test on the ten cross-validation folds rejects the hypothesis that all seven models perform equally (&chi;<sup>2</sup> = {{ n.friedman_chi2 | f2 }}, {{ n.friedman_p }}). The pairwise tests in Table 6.5 show where the difference lies.</p>
+<div class="tbl">
+  {{ cap('6.5', 'Hybrid Stack against each other model. Left: Wilcoxon signed-rank test on ten cross-validation folds with Holm correction. Right: exact McNemar test on the test set.') }}
+  <table>
+    <thead><tr><th>Hybrid Stack versus</th><th class="r">Mean diff. (points)</th><th class="r">Wilcoxon p</th><th class="r">Holm p</th><th class="r">Only hybrid right</th><th class="r">Only other right</th><th class="r">McNemar p</th></tr></thead>
+    <tbody>
+      {% for w in wilcoxon %}{% set m = (mcnemar | selectattr('hybrid_vs', 'equalto', w.hybrid_vs) | list)[0] %}
+      <tr><td>{{ w.hybrid_vs }}</td><td class="r">{{ '%+.2f' | format(w.mean_difference_points) }}</td><td class="r">{{ w.p_value | f3 }}</td><td class="r">{{ w.p_holm | f3 }}</td><td class="r">{{ m.only_hybrid_right }}</td><td class="r">{{ m.only_other_right }}</td><td class="r">{{ m.p_value | p }}</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+<p>The Hybrid Stack is significantly better than logistic regression on both tests (Holm-corrected p = {{ wx_lr.p_holm | f3 }}; McNemar p &lt; 0.001). Against the other five models no difference is significant: every Holm-corrected p-value is {{ wx_min | f1 }}, and the smallest McNemar p-value is {{ mc_min | f3 }}. On the test set the hybrid and the MLP make exactly the same errors.</p>
+<div class="box ok">
+  <div class="h">Answer to RQ1</div>
+  <p>CatBoost has the highest cross-validation and test accuracy, but the six non-linear models, including the proposed Hybrid Stack, cannot be separated statistically on this dataset. The Friedman test is significant only because logistic regression is far behind. The honest claim for the Hybrid Stack is therefore "as accurate as the best single models, with better-calibrated probabilities than most of them", not "more accurate".</p>
+</div>
+</section>
+
+{# ================================================================== CHAPTER 7 #}
+{{ open_chapter('7', 'Which answers drive the model, whether two explanation methods tell the same story, and which of them deserves more trust.') }}
+
+{{ h2('7.1') }}
+<p>Averaging the absolute SHAP values over the 100 explained test people gives the global importance in Figure 7.1. <i>{{ top.question }}</i> accounts for {{ top.shap | f1 }}% of the total, about {{ (top.shap / importance[1].shap) | round(1) }} times the share of the next question. It is followed by <i>{{ importance[1].question }}</i> ({{ importance[1].shap | f1 }}%) and <i>{{ importance[2].question }}</i> ({{ importance[2].shap | f1 }}%).</p>
+{{ figure('7.1', 'fig11_shap_importance.png', 'SHAP global importance: mean absolute contribution of each question to the predicted probability of being anxious.') }}
+<p>Figure 7.2 looks inside the top question: the mean SHAP value for each answer. An answer above zero pushes the prediction towards "anxious". The direction mirrors the raw data of Section 4.2, including its counter-intuitive ordering, which shows that the model has learned the dataset faithfully and that an explanation can only be as meaningful as the data behind it.</p>
+{{ figure('7.2', 'fig12_shap_top_question.png', 'Mean SHAP value of each answer to the most important question.', 'narrow') }}
+{{ figure('7.3', 'fig13_shap_one_person.png', 'SHAP explanation of a single test person. Orange bars push towards "anxious", blue bars away from it.') }}
+<p>Figure 7.3 explains one person. The model gives her a probability of {{ n.person_probability | f3 }} of being anxious (her true answer is {{ 'Yes' if n.person_label == 1 else 'No' }}). The SHAP values add up exactly: the baseline of {{ n.shap_base | f3 }} plus contributions of {{ n.shap_sum | f3 }} gives {{ (n.shap_base + n.shap_sum) | f3 }}. This additivity is what allows a clinician to read the bars as a complete account of the prediction.</p>
+
+{{ h2('7.2') }}
+<p>LIME's global ranking (Figure 7.4) also puts <i>{{ top.question }}</i> first, with {{ top.lime | f1 }}% of the total. Figure 7.5 explains the same person as before. The largest bars match SHAP's; the smaller ones differ in size and occasionally in order.</p>
+{{ figure('7.4', 'fig14_lime_importance.png', 'LIME global importance: mean absolute weight of each question.') }}
+{{ figure('7.5', 'fig15_lime_one_person.png', 'LIME explanation of the same person as in Figure 7.3.') }}
+
+{{ h2('7.3') }}
+<p>Table 7.1 and Figure 7.6 put the two global rankings next to each other, and Table 7.2 measures their agreement.</p>
+<div class="tbl">
+  {{ cap('7.1', 'Share of total importance assigned to each question by SHAP and by LIME (percent).') }}
+  <table>
+    <thead><tr><th>Question</th><th class="r" style="width:18mm">SHAP</th><th style="width:44mm"></th><th class="r" style="width:18mm">LIME</th><th style="width:44mm"></th></tr></thead>
+    <tbody>
+      {% for r in importance %}
+      <tr><td>{{ r.question }}</td><td class="r">{{ r.shap | f1 }}</td><td><span class="bar" style="width:{{ r.shap }}mm"></span></td><td class="r">{{ r.lime | f1 }}</td><td><span class="bar o" style="width:{{ r.lime }}mm"></span></td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{{ figure('7.6', 'fig16_shap_vs_lime.png', 'SHAP and LIME global importance side by side.') }}
+<div class="tbl">
+  {{ cap('7.2', 'Agreement between SHAP and LIME over 100 test people.') }}
+  <table>
+    <thead><tr><th>Measure</th><th class="r" style="width:22mm">Value</th><th>Reading</th></tr></thead>
+    <tbody>
+      <tr><td>Spearman correlation of the global rankings</td><td class="r">{{ agreement['Global Spearman'] | f3 }}</td><td>Very strong: the same overall picture</td></tr>
+      <tr><td>Mean per-person Spearman correlation</td><td class="r">{{ agreement['Per-person Spearman'] | f3 }}</td><td>Moderate: individual explanations differ</td></tr>
+      <tr><td>Same top question</td><td class="r">{{ agreement['Same top question (%)'] | f1 }}%</td><td>For about {{ (10 - agreement['Same top question (%)'] / 10) | round | int }} people in 10 the two methods name a different main reason</td></tr>
+      <tr><td>Overlap of the top three questions</td><td class="r">{{ agreement['Top-3 overlap (%)'] | f1 }}%</td><td>On average about two of the three match</td></tr>
+      <tr><td>Contributions with the same sign</td><td class="r">{{ agreement['Same direction (%)'] | f1 }}%</td><td>About one contribution in {{ (100 / (100 - agreement['Same direction (%)'])) | round | int }} points the opposite way</td></tr>
+    </tbody>
+  </table>
+</div>
+<p>The two methods agree on the big picture and differ in the detail. A reader who only saw the global bar charts would conclude that SHAP and LIME are interchangeable. At the level where a clinician would use them, one woman at a time, they name a different main reason for roughly {{ (100 - agreement['Same top question (%)']) | round | int }}% of people. This is the disagreement problem {{ cite('16') }} made concrete, and it is why the next section asks which method is right more often.</p>
+
+{{ h2('7.4') }}
+<p>Faithfulness is tested by deletion. If an explanation has found the answers that really drive a prediction, replacing those answers should change the prediction a lot. Table 7.3 gives the mean absolute change in predicted probability after replacing the top one, two and three questions named by each method, with random questions as the reference; Figure 7.7 shows the same numbers.</p>
+<div class="tbl">
+  {{ cap('7.3', 'Deletion-based faithfulness: mean absolute change in predicted probability after replacing the top-ranked questions. Higher is better.') }}
+  <table>
+    <thead><tr><th>Questions replaced</th><th class="r">SHAP</th><th class="r">LIME</th><th class="r">Random</th><th class="r">SHAP over LIME</th></tr></thead>
+    <tbody>
+      {% for r in faith %}
+      <tr><td>Top {{ r.k }}</td><td class="r">{{ r.SHAP | f3 }}</td><td class="r">{{ r.LIME | f3 }}</td><td class="r">{{ r.Random | f3 }}</td><td class="r">+{{ ((r.SHAP / r.LIME - 1) * 100) | round | int }}%</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{{ figure('7.7', 'fig17_faithfulness.png', 'Faithfulness of SHAP, LIME and a random ranking.', 'narrow') }}
+<p>Both methods are far better than chance: replacing a single question picked by SHAP moves the prediction by {{ faith[0].SHAP | f3 }}, about {{ (faith[0].SHAP / faith[0].Random) | round | int }} times the effect of a random question. SHAP is ahead of LIME at every depth, by {{ ((faith[0].SHAP / faith[0].LIME - 1) * 100) | round | int }}% for the top question and {{ ((faith[2].SHAP / faith[2].LIME - 1) * 100) | round | int }}% for the top three. When the two disagree about a person, SHAP's ranking is the one that better reflects what the model actually does.</p>
+
+{{ h2('7.5') }}
+<div class="tbl">
+  {{ cap('7.4', 'SHAP versus LIME: summary of all criteria.') }}
+  <table>
+    <thead><tr><th>Criterion</th><th style="width:52mm">SHAP</th><th style="width:52mm">LIME</th></tr></thead>
+    <tbody>
+      <tr><td>Most important question</td><td>{{ xai['Top question'].SHAP }} ({{ top.shap | f1 }}%)</td><td>{{ xai['Top question'].LIME }} ({{ top.lime | f1 }}%)</td></tr>
+      <tr><td>Top three questions</td><td>{{ xai['Top-3 questions'].SHAP }}</td><td>{{ xai['Top-3 questions'].LIME }}</td></tr>
+      <tr><td>Faithfulness, top 1 replaced</td><td>{{ xai['Faithfulness (top-1 removed)'].SHAP | f3 }}</td><td>{{ xai['Faithfulness (top-1 removed)'].LIME | f3 }}</td></tr>
+      <tr><td>Faithfulness, top 3 replaced</td><td>{{ xai['Faithfulness (top-3 removed)'].SHAP | f3 }}</td><td>{{ xai['Faithfulness (top-3 removed)'].LIME | f3 }}</td></tr>
+      <tr><td>Stability (Spearman between two runs)</td><td>{{ xai['Stability (Spearman)'].SHAP | f3 }}</td><td>{{ xai['Stability (Spearman)'].LIME | f3 }}</td></tr>
+      <tr><td>Seconds per person</td><td>{{ xai['Seconds per person'].SHAP | f2 }}</td><td>{{ xai['Seconds per person'].LIME | f2 }}</td></tr>
+      <tr><td>Contributions add up to the prediction</td><td>{{ xai['Adds up to the prediction'].SHAP }}</td><td>{{ xai['Adds up to the prediction'].LIME }}</td></tr>
+    </tbody>
+  </table>
+  <div class="note">Timings depend on the machine and vary from run to run; their ratio is the meaningful quantity.</div>
+</div>
+<p>The two methods are about equally stable: repeating the explanation with different background people (SHAP) or a different random seed (LIME) gives rank correlations of {{ xai['Stability (Spearman)'].SHAP | f3 }} and {{ xai['Stability (Spearman)'].LIME | f3 }}. LIME is roughly {{ speed | round | int }} times faster. With nine features both are quick enough for interactive use, so speed is not a reason to prefer LIME here.</p>
+<div class="box ok">
+  <div class="h">Answer to RQ2 and RQ3</div>
+  <p><i>{{ top.question }}</i> is the dominant driver of the model's predictions according to both methods. SHAP ranks <i>{{ importance[1].question }}</i>, <i>{{ importance[2].question }}</i> and <i>{{ importance[3].question }}</i> next. SHAP and LIME agree on this global picture but give a different main reason for about {{ (100 - agreement['Same top question (%)']) | round | int }}% of individuals. SHAP is the more faithful of the two, equally stable, slower but still fast, and the only one whose contributions sum to the prediction. For per-person explanations of this model, SHAP is the method to use.</p>
+</div>
+
+{{ h2('7.6') }}
+<p>Permutation importance offers a check that is independent of both SHAP and LIME and can be computed for every model. Table 7.5 gives the accuracy lost, in percentage points, when one question is shuffled in the test set.</p>
+<div class="tbl">
+  {{ cap('7.5', 'Permutation importance by model: loss of test accuracy (percentage points) when one question is shuffled. Darker cells mean larger loss.') }}
+  <table>
+    <thead><tr><th>Question</th><th class="r">LR</th><th class="r">RF</th><th class="r">XGB</th><th class="r">LGBM</th><th class="r">CatB</th><th class="r">MLP</th><th class="r">Hybrid</th></tr></thead>
+    <tbody>
+      {% for r in permutation %}
+      <tr><td>{{ r.question }}</td>{% for m in ['Logistic Regression', 'Random Forest', 'XGBoost', 'LightGBM', 'CatBoost', 'MLP Neural Net', H] %}{% set v = r[m] %}<td class="r" style="background: rgba(42,120,214,{{ ([v, 0] | max) / permutation_max * 0.55 }})">{{ v | f1 }}</td>{% endfor %}</tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  <div class="note">LR = logistic regression, RF = random forest, XGB = XGBoost, LGBM = LightGBM, CatB = CatBoost.</div>
+</div>
+<p>All seven models, including the linear baseline, lose most accuracy when <i>{{ permutation[0].question }}</i> is shuffled: about {{ permutation[0][H] | round | int }} points for the hybrid. The models agree less on the order of the remaining questions, and the MLP spreads its reliance more evenly than the tree models. The agreement on the top question across seven different models and three different importance methods is strong evidence that its dominance is a property of the data and not an artefact of one model or one explanation technique.</p>
+</section>
+
+{# ================================================================== CHAPTER 8 #}
+{{ open_chapter('8', 'Three additions that a screening tool needs beyond accuracy and explanation: knowing when it is unsure, saying what would change its mind, and treating subgroups alike.') }}
+
+{{ h2('8.1') }}
+<p>Table 8.1 and Figure 8.1 give the conformal prediction results for three coverage targets. In every case the coverage achieved on the test set is at or above the coverage promised.</p>
+<div class="tbl">
+  {{ cap('8.1', 'Conformal prediction with the Hybrid Stack on the ' ~ n.test_n ~ ' test people.') }}
+  <table>
+    <thead><tr><th class="r">Target coverage</th><th class="r">Actual coverage</th><th class="r">Mean set size</th><th class="r">One answer</th><th class="r">Both answers</th><th class="r">Empty set</th></tr></thead>
+    <tbody>
+      {% for r in conformal %}
+      <tr><td class="r">{{ r.target | round | int }}%</td><td class="r">{{ r.actual | f2 }}%</td><td class="r">{{ r.size | f2 }}</td><td class="r">{{ r.single | f2 }}%</td><td class="r">{{ r.both | f2 }}%</td><td class="r">{{ r.empty | f2 }}%</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{{ figure('8.1', 'fig19_conformal_coverage.png', 'Promised and achieved coverage of the conformal prediction sets.', 'narrow') }}
+<p>At the 95% target the model commits to a single answer for {{ c95.single | f1 }}% of the test people and returns an empty set for the remaining {{ c95.empty | f1 }}%. {% if c95.both == 0 and (c95.actual - c95.single) | abs < 0.01 %}Every single-answer set contains the true answer, so all of the model's test errors fall among the people for whom it declined to commit.{% endif %} An empty set arises because the model is confident so often that the calibrated threshold becomes strict; a prediction with a probability near 0.5 then fails the threshold for both classes. In practice an empty set and a two-answer set mean the same thing to a clinic: this case goes to a human. At the 99% target the behaviour changes as theory predicts: the empty sets disappear and {{ conformal[2].both | f1 }}% of people receive both answers.</p>
+<div class="box">
+  <div class="h">What this adds</div>
+  <p>Without conformal prediction the model answers all {{ n.test_n }} people and is wrong on {{ n.hybrid_errors }} of them with no warning. With it, at the 95% setting, the model answers about {{ (n.test_n * c95.single / 100) | round | int }} people and refers about {{ (n.test_n * (c95.empty + c95.both) / 100) | round | int }} to a human, and the cases it refers include the ones it would have got wrong.</p>
+</div>
+
+{{ h2('8.2') }}
+<p>For one test person whom the model flags as anxious with probability {{ n.cf_probability | f3 }}, the search of Section 5.10 found that a single changed answer is enough to reverse the decision (Table 8.2).</p>
+<div class="tbl">
+  {{ cap('8.2', 'Counterfactuals for one test person predicted anxious with probability ' ~ (n.cf_probability | f3) ~ '.') }}
+  <table>
+    <thead><tr><th class="r" style="width:30mm">Answers changed</th><th>Change</th><th class="r" style="width:36mm">New probability</th></tr></thead>
+    <tbody>
+      {% for r in counterfactual %}
+      <tr><td class="r">{{ r.answers_changed }}</td><td>{{ r.change | replace('->', '&rarr;') }}</td><td class="r">{{ r.new_probability | f3 }}</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+<p>The model's decision for this woman hinges on one answer. That is useful to know in two ways. For the clinician it identifies the symptom to ask about first. For the model's developer it is a warning about sensitivity: a prediction that moves from {{ n.cf_probability | f2 }} to {{ counterfactual[0].new_probability | f2 }} when one answer shifts by one step rests on a narrow basis, and a mis-clicked answer on a form could flip the outcome. A counterfactual describes the model, not the woman: it does not say that reducing irritability would relieve her anxiety.</p>
+
+{{ h2('8.3') }}
+<p>Table 8.3 and Figure 8.2 give the hybrid's test accuracy in each age band.</p>
+<div class="tbl">
+  {{ cap('8.3', 'Test accuracy of the Hybrid Stack by age group.') }}
+  <table>
+    <thead><tr><th>Age group</th><th class="r">Test people</th><th class="r">Accuracy</th><th class="r">Errors</th></tr></thead>
+    <tbody>
+      {% for r in fairness %}
+      <tr><td>{{ r.age }}</td><td class="r">{{ r.people }}</td><td class="r">{{ r.accuracy | f2 }}%</td><td class="r">{{ (r.people * (100 - r.accuracy) / 100) | round | int }}</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{{ figure('8.2', 'fig20_fairness_by_age.png', 'Hybrid Stack accuracy in each age group.', 'narrow') }}
+<p>Accuracy ranges from {{ fairness | map(attribute='accuracy') | min | f2 }}% to {{ fairness | map(attribute='accuracy') | max | f2 }}%. The lowest value belongs to the smallest group, where it corresponds to only {{ ((fairness | sort(attribute='accuracy') | first).people * (100 - (fairness | sort(attribute='accuracy') | first).accuracy) / 100) | round | int }} misclassified people out of {{ (fairness | sort(attribute='accuracy') | first).people }}. With groups of {{ fairness | map(attribute='people') | min }} to {{ fairness | map(attribute='people') | max }} people, differences of this size are within what chance alone would produce, so the check finds no evidence of an age-related gap. It also cannot rule one out. Age is the only demographic variable in the data, so fairness with respect to income, education, ethnicity or region cannot be examined at all.</p>
+<div class="box ok">
+  <div class="h">Answer to RQ4</div>
+  <p>Yes, within the limits of the data. The hybrid's probabilities are well calibrated (Brier {{ test[H].brier | f3 }}), its conformal sets meet their coverage promise at all three levels, a one-answer counterfactual exists for the example person, and accuracy does not differ detectably between age groups.</p>
+</div>
+</section>
+
+{# ================================================================== CHAPTER 9 #}
+{{ open_chapter('9', 'The check that changes how every accuracy in this book, and in earlier papers on this dataset, should be read.') }}
+
+{{ h2('9.1') }}
+<p>Section 4.6 showed that the {{ '{:,}'.format(n.rows) }} rows contain only {{ n.unique_patterns }} distinct answer patterns. After the random 80/20 split, <strong>{{ n.twins }} of the {{ n.test_n }} test people ({{ n.twin_share | f1 }}%) have an identical answer pattern in the training set</strong>. Only {{ n.no_twin_n }} test people present a pattern the model has not seen.</p>
+<div class="tbl">
+  {{ cap('9.1', 'Hybrid Stack test accuracy, split by whether the person\'s answer pattern also occurs in the training set.') }}
+  <table>
+    <thead><tr><th>Test people</th><th class="r">Number</th><th class="r">Share of test set</th><th class="r">Hybrid accuracy</th></tr></thead>
+    <tbody>
+      <tr><td>With a twin in the training set</td><td class="r">{{ n.twins }}</td><td class="r">{{ n.twin_share | f1 }}%</td><td class="r">{{ n.twin_accuracy | f2 }}%</td></tr>
+      <tr><td>Without a twin</td><td class="r">{{ n.no_twin_n }}</td><td class="r">{{ (100 - n.twin_share) | f1 }}%</td><td class="r">{{ n.no_twin_accuracy | f2 }}%</td></tr>
+      <tr class="hl"><td>All</td><td class="r">{{ n.test_n }}</td><td class="r">100%</td><td class="r">{{ test[H].accuracy | f2 }}%</td></tr>
+    </tbody>
+  </table>
+</div>
+<p>The hybrid is right on {% if n.twin_accuracy == 100 %}every one{% else %}{{ n.twin_accuracy | f1 }}%{% endif %} of the {{ n.twins }} people with a twin and on {{ n.no_twin_right }} of the {{ n.no_twin_n }} without one. {% if n.twin_accuracy == 100 %}All {{ n.hybrid_errors }} of its test errors fall in the small group of unseen patterns.{% endif %} A group of {{ n.no_twin_n }} people is too small for a precise estimate, but the direction is unmistakable: the overall test accuracy is an average dominated by cases the model has effectively memorised.</p>
+
+{{ h2('9.2') }}
+<p>Grouped five-fold cross-validation gives a larger and more reliable sample of the same situation. Every answer pattern is confined to one fold, so each model is always tested on patterns absent from its training data. Table 9.2 and Figure 9.1 compare the result with standard cross-validation.</p>
+<div class="tbl">
+  {{ cap('9.2', 'Standard ten-fold cross-validation against grouped five-fold cross-validation (no answer pattern shared between training and test folds).') }}
+  <table>
+    <thead><tr><th>Model</th><th class="r">Standard CV</th><th class="r">Grouped CV</th><th class="r">Drop (points)</th><th class="r">Grouped balanced acc.</th></tr></thead>
+    <tbody>
+      {% for m in robust_order %}{% set r = robust[m] %}
+      <tr{% if m == H %} class="hl"{% endif %}><td>{{ m }}</td><td class="r">{{ r.standard | f2 }}%</td><td class="r">{{ r.grouped | f2 }}%</td><td class="r">{{ (r.standard - r.grouped) | f1 }}</td><td class="r">{{ r.grouped_balanced | f2 }}%</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{{ figure('9.1', 'fig21_standard_vs_grouped_cv.png', 'Standard cross-validation (blue) against duplicate-aware grouped cross-validation (orange).') }}
+<p>Three results follow.</p>
+<ul>
+  <li><strong>All six non-linear models lose {{ n.drop_low | round | int }} to {{ n.drop_high | round | int }} points.</strong> They fall from about 98% to between {{ n.grouped_low | f1 }}% and {{ n.grouped_high | f1 }}%. The Hybrid Stack reaches {{ robust[H].grouped | f2 }}%.</li>
+  <li><strong>Logistic regression barely moves</strong> ({{ robust['Logistic Regression'].standard | f1 }}% to {{ robust['Logistic Regression'].grouped | f1 }}%). A linear model cannot memorise individual patterns, so it gains nothing from seeing them twice. The gap between it and the flexible models shrinks from about {{ (cv[H].mean - cv['Logistic Regression'].mean) | round | int }} points to about {{ (robust[H].grouped - robust['Logistic Regression'].grouped) | round | int }}.</li>
+  <li><strong>The ranking changes.</strong> {{ n.grouped_best }} is best on unseen patterns ({{ n.grouped_high | f2 }}%), and the order among the top models differs from the standard ranking. No model that looks best under the random split can be assumed best in deployment.</li>
+</ul>
+<p>The balanced accuracies are {{ n.bal_gap_low | f1 }} to {{ n.bal_gap_high | f1 }} points below the plain accuracies, so on unseen patterns the models also become less even-handed between the two classes.</p>
+
+{{ h2('9.3') }}
+<p>The two numbers answer different questions, and both are correct answers to their own question.</p>
+<div class="tbl">
+  {{ cap('9.3', 'What each accuracy figure measures.') }}
+  <table>
+    <thead><tr><th style="width:38mm">Figure</th><th style="width:38mm">Protocol</th><th>Question it answers</th><th style="width:40mm">Use it for</th></tr></thead>
+    <tbody>
+      <tr><td>{{ test[H].accuracy | f1 }}–{{ test['CatBoost'].accuracy | round | int }}% (test), about 98% (CV)</td><td>Random split of all rows</td><td>How often is the model right on a new row drawn from this file, most of which repeat rows it has seen?</td><td>Comparison with earlier papers, which used this protocol</td></tr>
+      <tr><td>{{ n.grouped_low | f1 }}–{{ n.grouped_high | f1 }}%</td><td>Grouped split by answer pattern</td><td>How often is the model right for a woman whose combination of answers it has never seen?</td><td>Any statement about real-world screening performance</td></tr>
+    </tbody>
+  </table>
+</div>
+<div class="box warn">
+  <div class="h">Reading CatBoost's 100%</div>
+  <p>Because no answer pattern in this dataset occurs with both target values, a model flexible enough to memorise the training patterns is guaranteed to be right on every test person with a twin. CatBoost does this completely and also happens to be right on the {{ n.no_twin_n }} people without a twin in this particular split. Its grouped accuracy of {{ robust['CatBoost'].grouped | f2 }}% shows what remains without the twins. A score of 100% here signals a property of the data, not a perfect classifier, and reporting it without the grouped figure would mislead.</p>
+</div>
+<div class="box ok">
+  <div class="h">Answer to RQ5</div>
+  <p>When no answer pattern is shared between training and test data, the accuracy of the proposed model falls from {{ cv[H].mean | f1 }}% to {{ robust[H].grouped | f1 }}%. Roughly {{ (cv[H].mean - robust[H].grouped) | round | int }} percentage points of the headline figure come from recognising repeated patterns. The remaining {{ robust[H].grouped | round | int }}% is still well above the {{ n.anxious_share | f1 }}% majority-class floor and above the linear baseline, so the model has learned real structure, only less than the headline suggests.</p>
+</div>
+</section>
+
+{# ================================================================= CHAPTER 10 #}
+{{ open_chapter('10', 'The proposed model next to the published results on the same dataset, in accuracy and in everything a paper should report besides accuracy.') }}
+
+{{ h2('10.1') }}
+<p>Figure 10.1 and Table 10.1 place this study among the earlier ones. All figures use a random split of the full dataset, so they are comparable with each other and all share the limitation described in Chapter 9.</p>
+{{ figure('10.1', 'fig22_literature_comparison.png', 'Reported accuracy of earlier studies (grey) and of this study (orange) on the same dataset.') }}
+<div class="tbl">
+  {{ cap('10.1', 'Accuracy on the dataset under a random split: earlier studies and this study.') }}
+  <table>
+    <thead><tr><th>Study</th><th class="r" style="width:26mm">Accuracy</th><th style="width:64mm"></th></tr></thead>
+    <tbody>
+      {% for r in literature | sort(attribute='accuracy') %}
+      <tr{% if r.study.startswith('This study') %} class="hl"{% endif %}><td>{{ r.study }}</td><td class="r">{{ r.accuracy | f2 }}%</td><td><span class="bar{{ ' o' if r.study.startswith('This study') else '' }}" style="width:{{ (r.accuracy - 90) * 6 }}mm"></span></td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  <div class="note">Bars start at 90%. Accuracies of earlier studies are taken from abstracts and search summaries and must be confirmed in the full texts.</div>
+</div>
+<p>The Hybrid Stack's {{ test[H].accuracy | f2 }}% lies above two of the four earlier results and below the other two. Its confidence interval, {{ n.ci }}%, reaches from just above the two lower published values to just above the highest. No published study reports an interval, so it is not possible to say whether any of the differences in the table are larger than chance; with test sets of about 300 people, most are probably not. This study's CatBoost result is the highest number in the table, and Chapter 9 explains why it should not be advertised as such.</p>
+
+{{ h2('10.2') }}
+<p>The more informative comparison is of what each study reports around its accuracy (Table 10.2).</p>
+<div class="tbl">
+  {{ cap('10.2', 'What each study reports besides accuracy. Entries for earlier studies reflect their abstracts.') }}
+  <table>
+    <thead><tr><th>Study</th><th class="c">Statistical tests / CI</th><th class="c">Per-person XAI</th><th class="c">XAI methods compared</th><th class="c">Uncertainty</th><th class="c">Counter-factual</th><th class="c">Duplicate audit</th></tr></thead>
+    <tbody>
+      <tr><td>JISEM study {{ cite('5') }}</td><td class="no">–</td><td class="no">–</td><td class="no">–</td><td class="no">–</td><td class="no">–</td><td class="no">–</td></tr>
+      <tr><td>Nayee et al. {{ cite('3') }}</td><td class="no">–</td><td class="no">–</td><td class="no">–</td><td class="no">–</td><td class="no">–</td><td class="no">–</td></tr>
+      <tr><td>Raza et al. {{ cite('2') }}</td><td class="no">–</td><td class="no">–</td><td class="no">–</td><td class="no">–</td><td class="no">–</td><td class="no">–</td></tr>
+      <tr><td>Lilhore et al. {{ cite('1') }}</td><td class="no">–</td><td class="no">–</td><td class="no">–</td><td class="no">–</td><td class="no">–</td><td class="no">–</td></tr>
+      <tr><td>Shivaprasad et al. {{ cite('4') }} (different target)</td><td class="no">–</td><td class="yes">Yes</td><td class="no">shown only</td><td class="no">–</td><td class="no">–</td><td class="no">–</td></tr>
+      <tr class="hl"><td>This study</td><td class="yes">Yes</td><td class="yes">Yes</td><td class="yes">Yes</td><td class="yes">Yes</td><td class="yes">Yes</td><td class="yes">Yes</td></tr>
+    </tbody>
+  </table>
+</div>
+<p>The comparison should be read with care in both directions. A dash means that the abstract does not mention the item, not that the full paper certainly lacks it. And the last column cuts both ways: the duplicate audit is this study's main methodological contribution, and it is also the result that lowers the realistic value of this study's own headline accuracy.</p>
+</section>
+
+{# ================================================================= CHAPTER 11 #}
+{{ open_chapter('11', 'What the results mean together, which problems the project solved, and how the findings should be presented to others.') }}
+
+{{ h2('11.1') }}
+<div class="tbl">
+  {{ cap('11.1', 'Summary of answers to the research questions.') }}
+  <table>
+    <thead><tr><th style="width:9mm"></th><th>Answer</th><th style="width:44mm">Key evidence</th></tr></thead>
+    <tbody>
+      <tr><td>RQ1</td><td>CatBoost scores highest, but the six non-linear models are statistically indistinguishable. The Hybrid Stack matches the best single models and has better-calibrated probabilities than most.</td><td>Test {{ test[H].accuracy | f2 }}% (CI {{ n.ci }}%); Holm p = {{ wx_min | f1 }} against five models</td></tr>
+      <tr><td>RQ2</td><td><i>{{ top.question }}</i> dominates. SHAP and LIME agree globally but differ for individuals.</td><td>Global Spearman {{ agreement['Global Spearman'] | f3 }}; per-person {{ agreement['Per-person Spearman'] | f3 }}</td></tr>
+      <tr><td>RQ3</td><td>SHAP is more faithful and additive; stability is similar; LIME is faster.</td><td>Top-1 faithfulness {{ faith[0].SHAP | f3 }} vs {{ faith[0].LIME | f3 }}</td></tr>
+      <tr><td>RQ4</td><td>Probabilities are calibrated, conformal sets meet their promise, a one-answer counterfactual exists, and no age gap is detectable.</td><td>Brier {{ test[H].brier | f3 }}; coverage {{ c95.actual | f1 }}% at a 95% target</td></tr>
+      <tr><td>RQ5</td><td>About {{ (cv[H].mean - robust[H].grouped) | round | int }} points of accuracy come from repeated answer patterns.</td><td>Grouped CV {{ robust[H].grouped | f1 }}% vs standard {{ cv[H].mean | f1 }}%</td></tr>
+    </tbody>
+  </table>
+</div>
+<p>Taken together, the results describe a dataset on which any sufficiently flexible model reaches about 98% under a random split, because most test rows are copies of training rows, and about 85% on new patterns. Within that setting, the choice among modern models matters little for accuracy. What distinguishes a useful model is the quality of its probabilities, its explanations and its ability to abstain, and on those the Hybrid Stack performs well.</p>
+<p>The hybrid did not beat its best base model. This is a common and honest outcome of stacking: when the base models are already near the ceiling and make almost the same errors, there is little for a meta-learner to add. What stacking did deliver is robustness. The hybrid is never the worst of the strong models on any metric, and its Brier score is better than that of three of its four base models.</p>
+
+{{ h2('11.2') }}
+<p>Table 11.2 lists the problems the project set out to solve, what was done and how far each is solved.</p>
+<div class="tbl long">
+  {{ cap('11.2', 'Problems addressed, the solution implemented and its status.') }}
+  <table>
+    <thead><tr><th style="width:44mm">Problem</th><th>What was done</th><th style="width:50mm">Status</th></tr></thead>
+    <tbody>
+      <tr><td>Models compared on single, untested numbers</td><td>Ten-fold CV, four statistical procedures, bootstrap CI</td><td>Solved: differences among six models shown to be non-significant</td></tr>
+      <tr><td>Black-box predictions</td><td>Exact SHAP and LIME for 100 people; permutation importance for all models</td><td>Solved for this model</td></tr>
+      <tr><td>No basis for choosing an XAI method</td><td>Four-criterion comparison of SHAP and LIME</td><td>Solved for this model and data; SHAP preferred</td></tr>
+      <tr><td>Overconfident predictions</td><td>Calibration analysis and conformal prediction at three levels</td><td>Solved: coverage promise met</td></tr>
+      <tr><td>Explanations that are not actionable</td><td>Exhaustive counterfactual search</td><td>Demonstrated on one person; not yet systematic</td></tr>
+      <tr><td>Unexamined subgroups</td><td>Accuracy per age band</td><td>Partly solved: only age is available</td></tr>
+      <tr><td>Hidden leakage from repeated rows</td><td>Twin analysis and grouped cross-validation</td><td>Solved as a measurement; the dataset itself cannot be repaired</td></tr>
+      <tr><td>Irreproducible pipelines</td><td>One notebook, fixed seed, pinned versions, results regenerated on every run</td><td>Solved</td></tr>
+    </tbody>
+  </table>
+</div>
+
+{{ h2('11.3') }}
+<ul>
+  <li><strong>For researchers using this dataset.</strong> Report grouped validation next to the random split. A new architecture that moves random-split accuracy from 98% to 99% has shown very little; one that moves grouped accuracy from 85% to 90% would have shown something real.</li>
+  <li><strong>For anyone building a screening aid.</strong> The six non-linear models make no false positives and a few false negatives at the default threshold of 0.5. In screening, a missed case costs more than a false alarm, so the threshold should be chosen deliberately, on validation data, to reach a target recall.</li>
+  <li><strong>For users of explanations.</strong> Two popular methods name a different main reason for a substantial minority of people. An explanation shown to a clinician should come from the more faithful method and should not be presented as a fact about the patient.</li>
+  <li><strong>For interpreting feature importance.</strong> The dominant question behaves in this dataset in a way that contradicts clinical expectation. A model can be accurate and well explained and still encode a relationship that would not hold elsewhere.</li>
+</ul>
+
+{{ h2('11.4') }}
+<p>When this work is written up for a journal or presented, the following order keeps the claims in proportion to the evidence.</p>
+<ol>
+  <li>Lead with the cross-validation result as mean and standard deviation: Hybrid Stack {{ cv[H].mean | f2 }}% &plusmn; {{ cv[H].std | f2 }}; CatBoost {{ cv['CatBoost'].mean | f2 }}% &plusmn; {{ cv['CatBoost'].std | f2 }}. Ten splits are more reliable than one.</li>
+  <li>Give the single test-set result with its confidence interval, including CatBoost's 100%, and state in the same paragraph that {{ n.twin_share | f1 }}% of test people have a twin in the training set.</li>
+  <li>Give the grouped cross-validation result ({{ n.grouped_low | f1 }}–{{ n.grouped_high | f1 }}%) as the estimate for unseen answer patterns.</li>
+  <li>State that the proposed model is not significantly more accurate than the best single models, and present explanation quality, calibration, uncertainty and the duplicate audit as the contributions.</li>
+</ol>
+<div class="box">
+  <div class="h">A sentence that can be used as written</div>
+  <p>"Under the random-split protocol of earlier work, the proposed stacking ensemble achieved {{ test[H].accuracy | f2 }}% test accuracy (95% CI {{ n.ci }}%) and {{ cv[H].mean | f2 }}% in ten-fold cross-validation, statistically indistinguishable from CatBoost and random forest. Because {{ (n.repeated_rows / n.rows * 100) | round | int }}% of the records repeat an earlier answer pattern, we additionally report grouped cross-validation, under which accuracy was {{ robust[H].grouped | f1 }}%."</p>
+</div>
+</section>
+
+{# ================================================================= CHAPTER 12 #}
+{{ open_chapter('12', 'What this study cannot show, stated as plainly as what it can.') }}
+
+{{ h2('12.1') }}
+<ul>
+  <li><strong>The label is not a diagnosis.</strong> The target is one self-reported questionnaire item. The model predicts how a woman answers one question from how she answers nine others. That is related to, but not the same as, detecting an anxiety disorder.</li>
+  <li><strong>Provenance is undocumented.</strong> The dataset's listing gives little detail on how, where and from whom the data were collected. All timestamps fall within {{ n.collection_hours | f1 }} hours, and {{ (n.repeated_rows / n.rows * 100) | round | int }}% of rows are repeats. Whether the repeats are genuine identical answers, duplicated entries or generated records cannot be determined from the file.</li>
+  <li><strong>The effective sample is small.</strong> There are {{ n.unique_patterns }} distinct answer patterns, not {{ '{:,}'.format(n.rows) }} independent observations. Grouped validation estimates performance from these.</li>
+  <li><strong>A counter-intuitive main predictor.</strong> The strongest question relates to the target in the opposite direction from clinical expectation, which raises doubts about how the item was worded, coded or answered.</li>
+  <li><strong>Few features and one demographic.</strong> There is no information on parity, time since birth, history of mental illness, social support, income or region, so neither richer prediction nor a serious fairness analysis is possible.</li>
+  <li><strong>No external data.</strong> All results come from one file. Nothing is known about how the model would perform on women from another hospital or country.</li>
+</ul>
+
+{{ h2('12.2') }}
+<ul>
+  <li><strong>One train/test split.</strong> The final test uses a single split of {{ n.test_n }} people. The confidence interval reflects sampling of test people but not the variation that a different split would produce.</li>
+  <li><strong>Tuning and model selection used random splits.</strong> Optuna and the ten-fold comparison ran on random folds, which contain twins. The selected hyper-parameters may therefore favour memorisation. Grouped validation was applied only at the end, as a check, with the same settings.</li>
+  <li><strong>Small tuning budget.</strong> Only two models were tuned, with 25 trials each. The others use fixed settings, so the comparison is between reasonable configurations, not between each model's best possible form.</li>
+  <li><strong>Explanations cover 100 people and one model.</strong> The SHAP-versus-LIME findings apply to the Hybrid Stack on this dataset. Stability was measured on 20 people.</li>
+  <li><strong>Faithfulness is measured in one way.</strong> The deletion test replaces answers with those of background people, which is the same idea SHAP itself is built on and may favour it.</li>
+  <li><strong>Conformal calibration uses out-of-fold scores from random folds.</strong> The coverage guarantee assumes that calibration and test data are exchangeable, which holds for the random split but would not hold for women with unseen patterns.</li>
+  <li><strong>One counterfactual example.</strong> It illustrates the method and is not a systematic evaluation.</li>
+  <li><strong>Literature numbers are second-hand.</strong> They come from abstracts and summaries and several details are unconfirmed.</li>
+</ul>
+
+{{ h2('12.3') }}
+<div class="tbl long">
+  {{ cap('12.1', 'Threats to validity and what was done about each.') }}
+  <table>
+    <thead><tr><th style="width:26mm">Type</th><th>Threat</th><th style="width:60mm">Mitigation in this study</th></tr></thead>
+    <tbody>
+      <tr><td>Internal</td><td>Leakage through preprocessing</td><td>Encoding inside pipelines; tuning on training data only; test set used once</td></tr>
+      <tr><td>Internal</td><td>Leakage through repeated rows</td><td>Measured with twin analysis and grouped CV; reported next to standard results</td></tr>
+      <tr><td>Statistical</td><td>Chance differences read as real</td><td>Friedman, Wilcoxon–Holm, McNemar, bootstrap CI</td></tr>
+      <tr><td>Statistical</td><td>Fold accuracies are not independent</td><td>Non-parametric tests; conclusions drawn only from large effects</td></tr>
+      <tr><td>Construct</td><td>Self-reported item used as outcome</td><td>Stated throughout; no clinical claim made</td></tr>
+      <tr><td>Construct</td><td>Importance mistaken for causation</td><td>Explanations described as properties of the model; counter-intuitive direction reported</td></tr>
+      <tr><td>External</td><td>Results do not transfer to other populations</td><td>Not mitigated; external validation is future work</td></tr>
+      <tr><td>Reproducibility</td><td>Results depend on software versions</td><td>Versions pinned; seed fixed; book generated from result files</td></tr>
+    </tbody>
+  </table>
+</div>
+</section>
+
+{# ================================================================= CHAPTER 13 #}
+{{ open_chapter('13', 'What should come next, ordered by how soon it can be done.') }}
+<figure>
+  <svg viewBox="0 0 760 196" role="img">
+    <line x1="20" y1="34" x2="740" y2="34" stroke="#d9dee8" stroke-width="3"/>
+    {% for label, colour, title, items in [
+      ('NEAR TERM', '#2a78d6', 'Strengthen the same study', ['Grouped CV for tuning too', 'Repeated splits, nested CV', 'Recall-targeted threshold', 'Systematic counterfactuals']),
+      ('MEDIUM TERM', '#2e9e6b', 'Better data', ['Validated scales (EPDS, GAD-7)', 'Clinician-confirmed outcome', 'Richer demographics', 'External validation set']),
+      ('LONG TERM', '#eb6834', 'Towards clinical use', ['Prospective pilot study', 'Clinician-facing explanations', 'TRIPOD+AI reporting', 'Monitoring after deployment'])] %}
+      <circle cx="{{ 130 + loop.index0 * 250 }}" cy="34" r="9" fill="{{ colour }}"/>
+      <text x="{{ 130 + loop.index0 * 250 }}" y="16" text-anchor="middle" font-size="10" font-weight="600" fill="{{ colour }}" letter-spacing="1.5">{{ label }}</text>
+      <rect x="{{ 20 + loop.index0 * 250 }}" y="56" width="220" height="132" rx="6" fill="#ffffff" stroke="{{ colour }}" stroke-width="1.4"/>
+      <text x="{{ 130 + loop.index0 * 250 }}" y="80" text-anchor="middle" font-size="12.5" font-weight="600" fill="#12305a">{{ title }}</text>
+      {% set outer = loop %}
+      {% for item in items %}<text x="{{ 36 + outer.index0 * 250 }}" y="{{ 104 + loop.index0 * 20 }}" font-size="10.8" fill="#3b455a">• {{ item }}</text>{% endfor %}
+    {% endfor %}
+  </svg>
+  <figcaption><b>Figure 13.1.</b> Roadmap for future work.</figcaption>
+</figure>
+
+{{ h2('13.1') }}
+<ul>
+  <li><strong>Use grouped validation from the start.</strong> Tune hyper-parameters and select models with grouped folds, so that the pipeline is optimised for unseen patterns and not for memorisation. Simpler, more regularised models may then win.</li>
+  <li><strong>Repeat and nest.</strong> Replace the single test split with repeated grouped cross-validation, and nest the tuning inside it, to obtain confidence intervals that include split-to-split variation.</li>
+  <li><strong>Choose the threshold for screening.</strong> Select the decision threshold to reach a stated recall, for example 95%, and report the specificity that results.</li>
+  <li><strong>Evaluate counterfactuals systematically.</strong> Compute them for every flagged person and report how many answers must change, which answers change most often and how plausible the changes are.</li>
+  <li><strong>Broaden the XAI comparison.</strong> Add further methods such as Anchors and model-specific TreeSHAP, a second faithfulness measure that does not rely on background replacement, and explanations for the other strong models.</li>
+  <li><strong>Deduplicated analysis.</strong> Train and test on the {{ n.unique_patterns }} unique patterns alone, with pattern frequency as a weight, as a third view next to the random and grouped protocols.</li>
+  <li><strong>Conformal prediction under shift.</strong> Calibrate with grouped folds and examine whether coverage holds for unseen patterns.</li>
+</ul>
+
+{{ h2('13.2') }}
+<ul>
+  <li><strong>A dataset with documented provenance.</strong> Collect or obtain data with a clear protocol, informed consent, one record per woman and a known collection period.</li>
+  <li><strong>Validated instruments.</strong> Use established scales such as the Edinburgh Postnatal Depression Scale and the GAD-7, whose scores have known clinical meaning, instead of single ad-hoc items.</li>
+  <li><strong>A clinical reference standard.</strong> Take the outcome from a clinician's assessment, so that the model predicts a diagnosis and not another questionnaire answer.</li>
+  <li><strong>Richer predictors.</strong> Add time since birth, parity, obstetric complications, psychiatric history, social support and socio-economic variables. These also make a real fairness analysis possible.</li>
+  <li><strong>External validation.</strong> Test the frozen model on data from a different site before making any claim about generalisation.</li>
+</ul>
+
+{{ h2('13.3') }}
+<ul>
+  <li><strong>Prospective evaluation.</strong> Run the model alongside routine screening in a pilot and compare its referrals with clinicians' decisions, without letting it influence care.</li>
+  <li><strong>Explanations designed with clinicians.</strong> Study which form of explanation (contribution bars, counterfactual sentences, uncertainty flags) clinicians understand and find useful.</li>
+  <li><strong>Reporting and governance.</strong> Follow TRIPOD+AI {{ cite('28') }} for reporting and trustworthy-AI guidance such as FUTURE-AI {{ cite('29') }} for design; obtain ethical approval; plan for monitoring of performance and drift after deployment.</li>
+  <li><strong>Local-language deployment.</strong> A screening aid for use in Bangladesh or similar settings needs questionnaires validated in the local language and culture, and an interface usable by community health workers.</li>
+</ul>
+</section>
+
+{# ================================================================= CHAPTER 14 #}
+{{ open_chapter('14', 'The study in four paragraphs.') }}
+<p>This project set out to do more than add another high accuracy to a dataset that already has several. It built seven models under one protocol, proposed a heterogeneous stacking ensemble, and then examined that ensemble from every side a screening tool should be examined from.</p>
+<p>Under the random-split protocol of earlier work, the Hybrid Stack reached {{ test[H].accuracy | f2 }}% test accuracy (95% CI {{ n.ci }}%) and {{ cv[H].mean | f2 }}% in ten-fold cross-validation, inside the published range of {{ n.lit_low | f2 }}% to {{ n.lit_high | f1 }}%. Statistical tests showed that it is clearly better than a linear baseline and not distinguishable from CatBoost, random forest, LightGBM, XGBoost or a neural network. Its probabilities are well calibrated, its conformal prediction sets meet their coverage promise, and both SHAP and LIME identify the same dominant question, with SHAP giving the more faithful per-person explanations.</p>
+<p>The most consequential finding concerns the data. Only {{ n.unique_patterns }} of the {{ '{:,}'.format(n.rows) }} responses are distinct, {{ n.twin_share | f1 }}% of test people have an exact twin in the training set, and when no pattern is shared between training and test data, accuracy falls to {{ n.grouped_low | f1 }}–{{ n.grouped_high | f1 }}%. The 98–100% figures reported on this dataset, here and elsewhere, mostly measure recognition of answers already seen. About {{ robust[H].grouped | round | int }}% is the realistic estimate for a new answer pattern.</p>
+<p>The lasting contribution is therefore methodological. Accuracy on this benchmark should be reported with a duplicate-aware validation, a confidence interval and a statistical test; explanations should be measured and not only shown; and a screening model should be able to say when it does not know. With better data, the same framework can be carried from a public benchmark towards a tool that clinicians could trust.</p>
+</section>
+
+{# ================================================================= REFERENCES #}
+<section class="front" id="references">
+  <h1>References</h1>
+  <p style="font-size:9.4pt;text-align:left">Entries marked <span class="flag">confirm</span> have details that could not be verified from the sources available during this project. Check every reference against the original publication before citing it.</p>
+  <ol class="refs">
+    <li>Lilhore U, Dalal S, Faujdar N, Simaiya S, Dahiya M, Tomar S, Hashmi A. Unveiling the prevalence and risk factors of early stage postpartum depression: a hybrid deep learning approach. <i>Multimedia Tools and Applications</i>. 2024;83:68281–68315. doi:10.1007/s11042-024-18182-3</li>
+    <li>Raza A, et al. Novel meta learning approach for detecting postpartum depression disorder using questionnaire data. <i>IEEE Access</i>. 2024;12:101247–101259. <span class="flag">confirm author list</span></li>
+    <li>Nayee N, Shah S, Bhaidasna H. Machine learning-based diagnosis of postpartum depression methods and insights. In: <i>ICSUMMIT 2026</i>. Atlantis Press; pp. 254–265. doi:10.2991/978-94-6239-727-9_19</li>
+    <li>Shivaprasad S, Chadaga K, Sampathila N, Prabhu S, Chadaga PR, Swathi KS. Explainable machine learning methods to predict postpartum depression risk. <i>Systems Science &amp; Control Engineering</i>. 2024;12(1). doi:10.1080/21642583.2024.2427033</li>
+    <li>Detection of postpartum depression using machine learning. <i>Journal of Information Systems Engineering and Management</i>. <span class="flag">confirm authors and year</span></li>
+    <li>Zhang W, et al. Machine learning models for the prediction of postpartum depression. <i>JMIR Medical Informatics</i>. 2020;8(4):e15516. <span class="flag">confirm title</span></li>
+    <li>Shin D, et al. Machine learning-based predictive modeling of postpartum depression. <i>Journal of Clinical Medicine</i>. 2020;9(9):2899. <span class="flag">confirm title</span></li>
+    <li>Amit G, et al. Estimation of postpartum depression risk from electronic health records using machine learning. <i>BMC Pregnancy and Childbirth</i>. 2021;21:630. <span class="flag">confirm title</span></li>
+    <li>Saqib K, et al. Machine learning methods for predicting postpartum depression: scoping review. <i>JMIR Mental Health</i>. 2021;8(11):e29838. <span class="flag">confirm title</span></li>
+    <li>Nakamura Y, et al. <i>Psychiatry and Clinical Neurosciences</i>. 2024. doi:10.1111/pcn.13659 <span class="flag">confirm title</span></li>
+    <li>Huang, et al. <i>Frontiers in Medicine</i>. 2025. doi:10.3389/fmed.2025.1565374 <span class="flag">confirm title and authors</span></li>
+    <li>Alkhateeb, et al. <i>Journal of Medical Internet Research</i>. 2026;28:e77376. <span class="flag">confirm title and authors</span></li>
+    <li>Xia, et al. <i>Frontiers in Public Health</i>. 2025. doi:10.3389/fpubh.2025.1631705 <span class="flag">confirm title and authors</span></li>
+    <li>Lundberg SM, Lee S-I. A unified approach to interpreting model predictions. In: <i>Advances in Neural Information Processing Systems 30 (NeurIPS)</i>. 2017.</li>
+    <li>Ribeiro MT, Singh S, Guestrin C. "Why should I trust you?": explaining the predictions of any classifier. In: <i>Proceedings of the 22nd ACM SIGKDD International Conference on Knowledge Discovery and Data Mining</i>. 2016.</li>
+    <li>Krishna S, et al. The disagreement problem in explainable machine learning: a practitioner's perspective. <i>Transactions on Machine Learning Research</i>. 2024.</li>
+    <li>Shah, et al. SHAP versus LIME on health data. In: <i>HEALTHINF 2025</i>. <span class="flag">confirm details</span></li>
+    <li>Wolpert DH. Stacked generalization. <i>Neural Networks</i>. 1992;5(2):241–259.</li>
+    <li>Chen T, Guestrin C. XGBoost: a scalable tree boosting system. In: <i>Proceedings of the 22nd ACM SIGKDD International Conference on Knowledge Discovery and Data Mining</i>. 2016.</li>
+    <li>Ke G, et al. LightGBM: a highly efficient gradient boosting decision tree. In: <i>Advances in Neural Information Processing Systems 30 (NeurIPS)</i>. 2017.</li>
+    <li>Prokhorenkova L, Gusev G, Vorobev A, Dorogush AV, Gulin A. CatBoost: unbiased boosting with categorical features. In: <i>Advances in Neural Information Processing Systems 31 (NeurIPS)</i>. 2018.</li>
+    <li>Akiba T, Sano S, Yanase T, Ohta T, Koyama M. Optuna: a next-generation hyperparameter optimization framework. In: <i>Proceedings of the 25th ACM SIGKDD International Conference on Knowledge Discovery and Data Mining</i>. 2019.</li>
+    <li>Vovk V, Gammerman A, Shafer G. <i>Algorithmic Learning in a Random World</i>. Springer; 2005.</li>
+    <li>Angelopoulos AN, Bates S. Conformal prediction: a gentle introduction. <i>Foundations and Trends in Machine Learning</i>. 2023;16(4):494–591.</li>
+    <li>Wachter S, Mittelstadt B, Russell C. Counterfactual explanations without opening the black box: automated decisions and the GDPR. <i>Harvard Journal of Law &amp; Technology</i>. 2017;31(2).</li>
+    <li>Demšar J. Statistical comparisons of classifiers over multiple data sets. <i>Journal of Machine Learning Research</i>. 2006;7:1–30.</li>
+    <li>Kapoor S, Narayanan A. Leakage and the reproducibility crisis in machine-learning-based science. <i>Patterns</i>. 2023;4(9):100804.</li>
+    <li>Collins GS, et al. TRIPOD+AI statement: updated guidance for reporting clinical prediction models that use regression or machine learning methods. <i>BMJ</i>. 2024;385:e078378.</li>
+    <li>Lekadir K, et al. FUTURE-AI: international consensus guideline for trustworthy and deployable artificial intelligence in healthcare. <i>BMJ</i>. 2025. <span class="flag">confirm details</span></li>
+    <li>PostPartum Depression [dataset]. Kaggle, uploader parvezalmuqtadir2348. https://www.kaggle.com/datasets/parvezalmuqtadir2348/postpartum-depression</li>
+  </ol>
+</section>
+
+{# ================================================================= APPENDICES #}
+<section class="chapter" id="appA"><header><div class="label">Appendix A</div><h1>Reproducing the Study</h1><p class="lead">Everything needed to regenerate every number, figure and table in this book.</p></header>
+<h3>Environment</h3>
+<p>Python {{ n.python.rsplit('.', 1)[0] }} with the pinned versions of Table 5.5. From the project folder:</p>
+<div class="box" style="font-family:var(--mono);font-size:8.6pt;line-height:1.6">
+python3.11 -m venv .venv &amp;&amp; source .venv/bin/activate<br>
+pip install -r requirements.txt<br>
+cd notebooks &amp;&amp; jupyter lab postpartum_anxiety_xai_study.ipynb &nbsp;&nbsp;# Run All
+</div>
+<p>Select the project's <code>.venv</code> as the notebook kernel. Running on a different Python or library version changes a few numbers slightly (for example the XGBoost test accuracy), because tree-building and random-number details differ between versions. The run takes a few minutes and rewrites every file in <code>results/</code>.</p>
+<h3>Rebuilding this book</h3>
+<div class="box" style="font-family:var(--mono);font-size:8.6pt;line-height:1.6">
+pip install jinja2 pandas pymupdf<br>
+python book/build_book.py
+</div>
+<p>The build script reads the result tables, the raw data file and the printed output of the executed notebook, fills them into the book template and prints it to PDF with Google Chrome. No number in the book is typed by hand.</p>
+<h3>Project layout</h3>
+<div class="tbl">
+  {{ cap('A.1', 'Folders of the project.') }}
+  <table>
+    <thead><tr><th style="width:40mm">Path</th><th>Contents</th></tr></thead>
+    <tbody>
+      <tr><td><code>data/raw/</code></td><td>The questionnaire file, never modified</td></tr>
+      <tr><td><code>data/DATA_CARD.md</code></td><td>Source, licence, known issues</td></tr>
+      <tr><td><code>notebooks/</code></td><td>The study notebook: {{ n.task_count }} tasks in {{ tasks | length }} parts</td></tr>
+      <tr><td><code>results/</code></td><td>Figures (PNG) and tables (CSV) written by the notebook</td></tr>
+      <tr><td><code>research/</code></td><td>Literature review and research gaps</td></tr>
+      <tr><td><code>book/</code></td><td>This book, its template and its build script</td></tr>
+      <tr><td><code>requirements.txt</code></td><td>Pinned library versions</td></tr>
+    </tbody>
+  </table>
+</div>
+</section>
+
+<section class="chapter" id="appB"><header><div class="label">Appendix B</div><h1>Notebook Task Map</h1><p class="lead">Every task of the study notebook, in order, so that any result in this book can be traced to the cell that produced it.</p></header>
+<div class="tbl long">
+  <table>
+    <thead><tr><th style="width:54mm">Part</th><th class="r" style="width:12mm">Task</th><th>What it does</th></tr></thead>
+    <tbody>
+      {% for part in tasks %}{% for t in part.steps %}
+      <tr><td>{% if loop.first %}<b>{{ part.part | replace('—', '·') }}</b>{% endif %}</td><td class="r">{{ t.n }}</td><td>{{ t.title | replace('—', ':') }}</td></tr>
+      {% endfor %}{% endfor %}
+    </tbody>
+  </table>
+</div>
+</section>
+
+<section class="chapter" id="appC"><header><div class="label">Appendix C</div><h1>Complete Result Tables</h1><p class="lead">One table with every model under every protocol, and the headline numbers of the study.</p></header>
+<div class="tbl">
+  {{ cap('C.1', 'Every model under every protocol (accuracy in percent).') }}
+  <table>
+    <thead><tr><th>Model</th><th class="r">Train</th><th class="r">10-fold CV</th><th class="r">Test</th><th class="r">Grouped CV</th><th class="r">Test errors</th><th class="r">AUC</th><th class="r">Brier</th></tr></thead>
+    <tbody>
+      {% for m in models %}
+      <tr{% if m == H %} class="hl"{% endif %}><td>{{ m }}</td><td class="r">{{ gap[m].train_accuracy | f2 }}</td><td class="r">{{ cv[m].mean | f2 }} &plusmn; {{ cv[m].std | f2 }}</td><td class="r">{{ test[m].accuracy | f2 }}</td><td class="r">{{ robust[m].grouped | f2 }}</td><td class="r">{{ confusion[m].fp + confusion[m].fn }}</td><td class="r">{{ test[m].roc_auc | f3 }}</td><td class="r">{{ test[m].brier | f3 }}</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+<div class="tbl long">
+  {{ cap('C.2', 'Headline numbers of the study.') }}
+  <table>
+    <thead><tr><th>Quantity</th><th class="r" style="width:60mm">Value</th></tr></thead>
+    <tbody>
+      <tr><td>Responses / distinct answer patterns</td><td class="r">{{ '{:,}'.format(n.rows) }} / {{ n.unique_patterns }}</td></tr>
+      <tr><td>Anxious / not anxious</td><td class="r">{{ n.anxious }} / {{ n.not_anxious }}</td></tr>
+      <tr><td>Training / test people</td><td class="r">{{ '{:,}'.format(n.train_n) }} / {{ n.test_n }}</td></tr>
+      <tr><td>Best model on the test set</td><td class="r">{{ models[0] }} ({{ test[models[0]].accuracy | f2 }}%)</td></tr>
+      <tr><td>Hybrid Stack test accuracy (95% CI)</td><td class="r">{{ test[H].accuracy | f2 }}% ({{ n.ci }}%)</td></tr>
+      <tr><td>Hybrid Stack F1 / recall / specificity</td><td class="r">{{ test[H].f1 | f2 }}% / {{ test[H].recall | f2 }}% / {{ test[H].specificity | f2 }}%</td></tr>
+      <tr><td>Hybrid Stack ROC-AUC / Brier / MCC</td><td class="r">{{ test[H].roc_auc | f3 }} / {{ test[H].brier | f3 }} / {{ test[H].mcc | f3 }}</td></tr>
+      <tr><td>Hybrid Stack 10-fold CV accuracy</td><td class="r">{{ cv[H].mean | f2 }}% &plusmn; {{ cv[H].std | f2 }}</td></tr>
+      <tr><td>Hybrid Stack grouped-CV accuracy</td><td class="r">{{ robust[H].grouped | f2 }}%</td></tr>
+      <tr><td>Friedman test over seven models</td><td class="r">&chi;<sup>2</sup> = {{ n.friedman_chi2 | f2 }}, {{ n.friedman_p }}</td></tr>
+      <tr><td>Test people with a twin in the training set</td><td class="r">{{ n.twins }} of {{ n.test_n }} ({{ n.twin_share | f1 }}%)</td></tr>
+      <tr><td>Top question (SHAP and LIME)</td><td class="r">{{ top.question }}</td></tr>
+      <tr><td>SHAP–LIME Spearman, global / per person</td><td class="r">{{ agreement['Global Spearman'] | f3 }} / {{ agreement['Per-person Spearman'] | f3 }}</td></tr>
+      <tr><td>Conformal coverage at 90 / 95 / 99% target</td><td class="r">{{ conformal[0].actual | f2 }}% / {{ conformal[1].actual | f2 }}% / {{ conformal[2].actual | f2 }}%</td></tr>
+    </tbody>
+  </table>
+</div>
+</section>
+
+<section class="chapter" id="appD"><header><div class="label">Appendix D</div><h1>Glossary and Abbreviations</h1><p class="lead">Terms used in this book, in plain language.</p></header>
+<div class="tbl long">
+  <table>
+    <thead><tr><th style="width:44mm">Term</th><th>Meaning</th></tr></thead>
+    <tbody>
+      <tr><td>Answer pattern</td><td>One complete combination of answers to the nine feature questions</td></tr>
+      <tr><td>AUC / ROC-AUC</td><td>Area under the receiver operating characteristic curve; 1.0 is perfect ranking, 0.5 is chance</td></tr>
+      <tr><td>Bagging</td><td>Training many models on resampled data and averaging them</td></tr>
+      <tr><td>Balanced accuracy</td><td>Mean of recall and specificity</td></tr>
+      <tr><td>Base model</td><td>A model whose predictions feed the meta-learner in a stack</td></tr>
+      <tr><td>Boosting</td><td>Building models in sequence, each correcting the errors of the previous ones</td></tr>
+      <tr><td>Bootstrap</td><td>Resampling the data with replacement to estimate the uncertainty of a statistic</td></tr>
+      <tr><td>Brier score</td><td>Mean squared error of predicted probabilities; lower is better</td></tr>
+      <tr><td>Calibration</td><td>Agreement between predicted probabilities and observed frequencies</td></tr>
+      <tr><td>CI</td><td>Confidence interval</td></tr>
+      <tr><td>Conformal prediction</td><td>A method that returns a set of answers with a guaranteed coverage rate</td></tr>
+      <tr><td>Counterfactual</td><td>The smallest change to the inputs that would change the prediction</td></tr>
+      <tr><td>Coverage</td><td>Share of cases in which a prediction set contains the true answer</td></tr>
+      <tr><td>Cramér's V</td><td>Strength of association between two categorical variables, from 0 to 1</td></tr>
+      <tr><td>CV</td><td>Cross-validation: repeated training and testing on different parts of the data</td></tr>
+      <tr><td>Data leakage</td><td>Information from test data reaching the model during training</td></tr>
+      <tr><td>EPDS</td><td>Edinburgh Postnatal Depression Scale, a validated screening questionnaire</td></tr>
+      <tr><td>Faithfulness</td><td>How well an explanation reflects what the model actually does</td></tr>
+      <tr><td>Friedman test</td><td>Non-parametric test for differences among several models measured on the same folds</td></tr>
+      <tr><td>GAD-7</td><td>Generalised Anxiety Disorder 7-item scale</td></tr>
+      <tr><td>Grouped CV</td><td>Cross-validation in which all rows of a group stay in the same fold</td></tr>
+      <tr><td>Holm correction</td><td>Adjustment of p-values when several tests are made</td></tr>
+      <tr><td>Hybrid Stack</td><td>The proposed model: CatBoost, XGBoost, random forest and MLP combined by logistic regression</td></tr>
+      <tr><td>LIME</td><td>Local Interpretable Model-agnostic Explanations</td></tr>
+      <tr><td>MCC</td><td>Matthews correlation coefficient</td></tr>
+      <tr><td>McNemar test</td><td>Test comparing two models on the cases where they disagree</td></tr>
+      <tr><td>Meta-learner</td><td>The model that combines the base models' predictions in a stack</td></tr>
+      <tr><td>MLP</td><td>Multilayer perceptron, a feed-forward neural network</td></tr>
+      <tr><td>One-hot encoding</td><td>Representing each possible answer as its own 0/1 column</td></tr>
+      <tr><td>Out-of-fold prediction</td><td>A prediction for a person made by a model that was not trained on that person</td></tr>
+      <tr><td>Permutation importance</td><td>Loss of accuracy when one feature is shuffled</td></tr>
+      <tr><td>Recall (sensitivity)</td><td>Share of true positives that the model finds</td></tr>
+      <tr><td>SHAP</td><td>SHapley Additive exPlanations</td></tr>
+      <tr><td>Specificity</td><td>Share of true negatives that the model correctly clears</td></tr>
+      <tr><td>Stacking</td><td>Combining several models by training another model on their predictions</td></tr>
+      <tr><td>Stratified split</td><td>A split that keeps the class proportions equal in every part</td></tr>
+      <tr><td>Twin</td><td>A test person whose exact answer pattern also occurs in the training set</td></tr>
+      <tr><td>Wilcoxon signed-rank test</td><td>Non-parametric paired test for two models measured on the same folds</td></tr>
+      <tr><td>XAI</td><td>Explainable artificial intelligence</td></tr>
+    </tbody>
+  </table>
+</div>
+</section>
+
+</body>
+</html>

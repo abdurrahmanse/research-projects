@@ -1,7 +1,7 @@
 hybrid_vs,only_hybrid_right,only_other_right,p_value
 Logistic Regression,53,2,0.0
 Random Forest,0,2,0.5
-XGBoost,3,0,0.25
+XGBoost,5,0,0.0625
 LightGBM,3,0,0.25
 CatBoost,0,4,0.125
 MLP Neural Net,0,0,1.0

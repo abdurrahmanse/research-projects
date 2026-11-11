@@ -2,6 +2,6 @@ hybrid_vs,mean_difference_points,p_value,p_holm
 Logistic Regression,15.3058,0.002,0.0117
 CatBoost,-0.25,0.375,1.0
 MLP Neural Net,0.4146,0.375,1.0
+XGBoost,0.1667,0.5,1.0
 LightGBM,-0.0826,0.75,1.0
 Random Forest,0.082,1.0,1.0
-XGBoost,0.0,1.0,1.0

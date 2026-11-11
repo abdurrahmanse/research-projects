@@ -1,7 +1,7 @@
 ,true_negative,false_positive,false_negative,true_positive
 Logistic Regression,72,33,22,174
 Random Forest,105,0,2,194
-XGBoost,105,0,7,189
+XGBoost,105,0,9,187
 LightGBM,105,0,7,189
 CatBoost,105,0,0,196
 MLP Neural Net,105,0,4,192

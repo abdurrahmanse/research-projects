@@ -89,7 +89,8 @@ Other limits: the label is one self-reported question, not a clinical diagnosis;
 ├── data/            raw CSV (read-only) and DATA_CARD.md
 ├── notebooks/       postpartum_anxiety_xai_study.ipynb  (57 small tasks, one per cell)
 ├── results/         21 figures (PNG) and 17 tables (CSV) written by the notebook
-└── research/        literature review and research gaps
+├── research/        literature review and research gaps
+└── book/            the project book (PDF), its template and build script
 ```
 
 ## Reproduce

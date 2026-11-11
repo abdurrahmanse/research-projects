@@ -1,10 +1,10 @@
 ,Logistic Regression,Random Forest,XGBoost,LightGBM,CatBoost,MLP Neural Net,Hybrid Stack (proposed)
-Feeling of guilt,7.71,20.47,18.74,19.47,20.66,19.6,19.87
-Problems concentrating or making decision,2.26,5.98,9.7,11.5,8.37,11.03,7.04
-Overeating or loss of appetite,3.26,6.58,9.9,7.97,5.25,11.23,5.91
-Irritable towards baby & partner,4.78,6.38,8.17,4.78,5.85,6.98,4.52
-Trouble sleeping at night,1.0,3.46,4.52,2.13,4.39,4.72,3.79
-Suicide attempt,1.26,4.25,3.85,4.12,4.19,6.91,2.92
-Age,-0.13,2.13,4.12,4.52,3.59,7.71,2.52
-Feeling sad or Tearful,1.0,3.12,2.13,1.33,3.06,7.04,1.99
-Problems of bonding with baby,1.86,1.66,2.99,1.2,2.19,8.57,1.06
+Feeling of guilt,7.71,20.47,18.14,19.47,20.66,19.6,19.53
+Problems concentrating or making decision,2.26,5.98,12.29,11.5,8.37,11.03,7.31
+Overeating or loss of appetite,3.26,6.58,8.04,7.97,5.25,11.23,5.91
+Irritable towards baby & partner,4.78,6.38,4.92,4.78,5.85,6.98,4.92
+Trouble sleeping at night,1.0,3.46,3.32,2.13,4.39,4.72,3.79
+Suicide attempt,1.26,4.25,3.12,4.12,4.19,6.91,2.92
+Age,-0.13,2.13,4.19,4.52,3.59,7.71,2.46
+Feeling sad or Tearful,1.0,3.12,2.92,1.33,3.06,7.04,2.19
+Problems of bonding with baby,1.86,1.66,1.13,1.2,2.19,8.57,1.06
