@@ -9,9 +9,25 @@ How to read this file: every study below was located by web search (November 202
 | A | Lilhore U, Dalal S, Faujdar N, Simaiya S, Dahiya M, Tomar S, Hashmi A. "Unveiling the prevalence and risk factors of early stage postpartum depression: a hybrid deep learning approach." *Multimedia Tools and Applications* 83, 68281–68315 (2024). doi 10.1007/s11042-024-18182-3 | Hybrid transfer learning + BiLSTM + CNN; compared with DT, RF, AdaBoost, LightGBM, XGBoost, CatBoost | Accuracy 99.6%, precision 99.7% | Not reported in the abstract ⚠ | No explanation of predictions; no uncertainty; repeated answer patterns not discussed in the abstract |
 | B | Raza A et al. ⚠ (full author list not confirmed). "Novel Meta Learning Approach for Detecting Postpartum Depression Disorder Using Questionnaire Data." *IEEE Access* 12, 101247–101259 (2024) | MDKR: decision tree + KNN + random forest feeding an MLP meta-learner; 11 algorithms compared; k-fold validation, hyper-parameter tuning | Accuracy 99% | Not reported in the abstract ⚠ | Same as above. Some sources say this paper used the suicide-attempt item as target ⚠ |
 | C | Nayee N, Shah S, Bhaidasna H. "Machine Learning-Based Diagnosis of Postpartum Depression Methods and Insights." *ICSUMMIT 2026*, Atlantis Press, pp. 254–265. doi 10.2991/978-94-6239-727-9_19 | SVM, XGBoost, RF, DT, RBFNN/KNN with recursive feature elimination | Accuracy 96.99% | No | No XAI, no statistical tests, no duplicate analysis |
-| D | Shivaprasad S, Chadaga K, Sampathila N, Prabhu S, Chadaga PR, Swathi KS. "Explainable machine learning methods to predict postpartum depression risk." *Systems Science & Control Engineering* 12(1) (2024). doi 10.1080/21642583.2024.2427033 | Heterogeneous classifiers; cites a Kaggle PostPartum Depression dataset ⚠ (size not confirmed) | Not confirmed ⚠ | SHAP, LIME, ELI5, Anchor | XAI methods are shown side by side but (to be confirmed in the full text) not compared quantitatively |
+| D | Shivaprasad S, Chadaga K, Sampathila N, Prabhu S, Chadaga PR, Swathi KS. "Explainable machine learning methods to predict postpartum depression risk." *Systems Science & Control Engineering* 12(1) (2024). doi 10.1080/21642583.2024.2427033 | Custom ensemble-stacking of baseline classifiers; target reported as the suicide-attempt item (multi-class) ⚠ | Not confirmed ⚠ | SHAP, LIME, ELI5, Anchor | Different target from this project; XAI methods shown side by side but (confirm in full text) not compared with numbers |
+| E | "Detection of Postpartum Depression using Machine Learning", *Journal of Information Systems Engineering and Management (JISEM)* ⚠ authors and year not confirmed | RF, XGBoost, CatBoost | CatBoost 95.68%, XGBoost 95%, RF 94% | Not confirmed ⚠ | No statistical tests or uncertainty reported in the summary seen |
+| F | "Early Detection of Postpartum Depression Using Explainable Deep Learning Models" (ResearchGate preprint, 2025–26) ⚠ may use a different 1,503-record dataset | DNN and two other deep models | Accuracy 96%, F1 96%, ROC-AUC 0.980 | Yes (type not confirmed) | Preprint; dataset identity unclear, so it is **not** used in the notebook comparison |
 
-**Benchmark to beat on this dataset: 96.99% – 99.6% accuracy** under a random train/test split of all 1,503 rows.
+**Benchmark on this dataset: 95.68% – 99.6% accuracy** under a random train/test split of all 1,503 rows.
+
+### How this project compares
+
+| | Earlier studies (A–E) | This project |
+|---|---|---|
+| Accuracy, random split | 95.68% – 99.6% | Hybrid Stack 98.67% (95% CI 97.34–99.67%); CatBoost 100% on the same split; 10-fold CV 98.0–98.3% |
+| Confidence interval and statistical tests | Not reported in the abstracts | Bootstrap CI, Friedman, Wilcoxon–Holm, McNemar |
+| Explanation of each prediction | Only D (and possibly B ⚠) | SHAP and LIME for 100 test people |
+| SHAP vs LIME measured against each other | None found | Agreement, faithfulness, stability, speed |
+| Uncertainty of a prediction | None found | Conformal prediction and calibration |
+| Counterfactual ("what would have to change") | None found | Yes |
+| Repeated answer patterns analysed | None found | Yes (grouped CV: 84.7%) |
+
+Honest reading: on raw accuracy this project is **in the same range** as the best earlier papers, not clearly above the 99–99.6% ones; a single test split of 301 people cannot separate 98.7% from 99.6%. The project is stronger in what surrounds the number: tests, explanation, uncertainty and the duplicate analysis.
 
 ## 2. Wider postpartum-depression ML literature
 

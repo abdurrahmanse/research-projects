@@ -10,7 +10,7 @@ A portfolio of self-contained machine-learning research projects. Each project l
 
 | # | Project | Question | Main result | Status |
 |---|---|---|---|---|
-| 01 | [Interpretable postpartum anxiety symptom screening with a hybrid ensemble and explainable AI](01-postpartum-anxiety-cgth/) | Which of five algorithms predicts a self-reported anxiety item best without leakage, and do SHAP and LIME explain it the same way? | Hybrid Ensemble ranks first: balanced accuracy 77.2%, ROC-AUC 0.843 (not significantly above random forest); SHAP and LIME agree (Spearman 0.98) | Analysis complete |
+| 01 | [Explainable hybrid stacking ensemble for postpartum anxiety screening](01-postpartum-anxiety-xai-hybrid/) | Which of seven models predicts a self-reported anxiety item best, and do SHAP and LIME explain the hybrid the same way? | Hybrid Stack: test accuracy 98.67% (95% CI 97.3–99.7%), not significantly different from CatBoost or random forest; 84.7% on unseen answer patterns; SHAP more faithful than LIME | Analysis complete |
 
 Each project README holds the abstract, method, results, limitations and reproduction steps.
 
@@ -21,13 +21,13 @@ research-projects/
 ├── README.md                      # this file: portfolio index
 ├── docs/
 │   └── project_template.md        # layout and checklist for a new project
-├── 01-postpartum-anxiety-cgth/    # project 01
+├── 01-postpartum-anxiety-xai-hybrid/    # project 01
 │   ├── README.md
 │   ├── requirements.txt
 │   ├── data/                      # raw data (read-only) and data card
 │   ├── notebooks/                 # the study notebook
 │   ├── results/                   # tables and figures
-│   └── research_plan/             # audit, literature, method, thesis outline
+│   └── research/                  # literature review and research gaps
 └── 02-…/                          # future projects follow the same layout
 ```
 
@@ -35,7 +35,7 @@ research-projects/
 
 These apply to every project here.
 
-- **No leakage.** Duplicates are removed before any split. Imputation, encoding and tuning are learned inside training folds only.
+- **No hidden leakage.** Repeated rows are counted and a duplicate-aware validation is reported next to the standard one. Imputation, encoding and tuning are learned inside training folds only.
 - **Hypotheses before results.** Settings, margins and tests are fixed before the main run.
 - **Uncertainty is reported.** Repeated cross-validation with corrected confidence intervals, not a single split.
 - **Honest scope.** Claims match what the data supports. Negative and weakened results are reported.
@@ -47,10 +47,10 @@ These apply to every project here.
 Each project has its own environment. For project 01:
 
 ```bash
-cd 01-postpartum-anxiety-cgth
+cd 01-postpartum-anxiety-xai-hybrid
 python -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
-cd notebooks && jupyter lab final_thesis_study.ipynb     # Run All
+cd notebooks && jupyter lab postpartum_anxiety_xai_study.ipynb     # Run All
 ```
 
 ## Adding a new project

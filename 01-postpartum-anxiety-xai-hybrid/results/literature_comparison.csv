@@ -1,0 +1,7 @@
+study,accuracy_%
+JISEM study (CatBoost),95.68
+Nayee et al. 2026 (XGBoost/RF + RFE),96.99
+Raza et al. 2024 (MDKR meta-learner),99.0
+Lilhore et al. 2024 (BiLSTM + CNN),99.6
+This study: Hybrid Stack (proposed),98.67
+This study: CatBoost,100.0

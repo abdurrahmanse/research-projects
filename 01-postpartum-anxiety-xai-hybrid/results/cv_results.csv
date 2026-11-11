@@ -1,8 +1,8 @@
 ,cv_accuracy_mean_%,cv_accuracy_std_%
 CatBoost,98.25,1.44
 LightGBM,98.08,1.47
+XGBoost,98.0,1.13
 Hybrid Stack (proposed),98.0,1.26
 Random Forest,97.92,1.37
-XGBoost,97.83,1.53
 MLP Neural Net,97.59,1.39
 Logistic Regression,82.7,2.34

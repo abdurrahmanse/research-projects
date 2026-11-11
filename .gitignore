@@ -16,3 +16,6 @@ __pycache__/
 # Local-only files
 *.log
 *.local
+
+# Model training logs
+catboost_info/

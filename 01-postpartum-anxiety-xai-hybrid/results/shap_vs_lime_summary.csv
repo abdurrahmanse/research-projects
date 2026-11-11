@@ -1,8 +1,8 @@
 ,SHAP,LIME
 Top question,Feeling of guilt,Feeling of guilt
 Top-3 questions,"Feeling of guilt, Irritable towards baby & partner, Problems concentrating or making decision","Feeling of guilt, Overeating or loss of appetite, Irritable towards baby & partner"
-Faithfulness (top-1 removed),0.3014,0.2374
-Faithfulness (top-3 removed),0.4715,0.3872
-Stability (Spearman),0.908,0.903
-Seconds per person,0.14,0.03
+Faithfulness (top-1 removed),0.3038,0.2366
+Faithfulness (top-3 removed),0.4712,0.3912
+Stability (Spearman),0.917,0.893
+Seconds per person,0.2,0.04
 Adds up to the prediction,Yes,No
