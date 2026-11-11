@@ -1,9 +1,0 @@
-study,data,reported result
-Nayee et al. 2026,"Kaggle, 1,503 rows (likely this dataset)",Accuracy 96.99%
-"This study, duplicates kept","Same 1,503 rows",Accuracy 98.8%
-"This study, duplicates removed",326 unique rows,Accuracy 76.0%
-"This study, Hybrid Ensemble","326 unique rows, 50-fold CV","Balanced accuracy 77.2%, AUC 0.843"
-Zhang et al. 2020,"Chinese cohort, 508 women",AUC 0.78
-Nakamura et al. 2024,Japanese cohort,AUC 0.83
-Amit et al. 2021,"UK health records, 266,544 women",AUC 0.72-0.74
-Adhikari & Karki 2026,"Bangladesh, 800 women",Accuracy 76.5-77.4%

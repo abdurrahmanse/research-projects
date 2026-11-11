@@ -1,5 +1,0 @@
-compared_with,difference,p_value,p_corrected,significant
-Logistic Regression,0.0418,0.0383,0.153,False
-Random Forest,0.0012,0.8785,1.0,False
-Extra Trees,0.0119,0.2761,1.0,False
-SVM,0.0053,0.4692,1.0,False

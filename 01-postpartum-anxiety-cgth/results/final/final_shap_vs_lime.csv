@@ -1,5 +1,0 @@
-,SHAP,LIME
-Method,Exact Shapley values,Local linear approximation
-Most important question,Guilt,Guilt
-Top 3 questions,"Guilt, Appetite, Irritable","Guilt, Appetite, Irritable"
-Seconds per person,0.44,0.09

@@ -1,0 +1,8 @@
+,train_accuracy,test_accuracy,gap
+CatBoost,100.0,100.0,0.0
+Hybrid Stack (proposed),100.0,98.67,1.33
+LightGBM,100.0,97.67,2.33
+Logistic Regression,83.44,81.73,1.72
+MLP Neural Net,100.0,98.67,1.33
+Random Forest,100.0,99.34,0.66
+XGBoost,100.0,97.01,2.99

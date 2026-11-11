@@ -1,0 +1,12 @@
+,value
+Best model on the test set,CatBoost
+Hybrid Stack test accuracy (%),98.67
+Hybrid Stack 95% CI (%),97.34-99.67
+Hybrid Stack F1 (%),98.97
+Hybrid Stack ROC-AUC,1.0
+Hybrid Stack 10-fold CV accuracy (%),98.0
+Hybrid Stack grouped-CV accuracy (%),84.7
+Top question (SHAP),Feeling of guilt
+Top question (LIME),Feeling of guilt
+SHAP-LIME global Spearman,0.917
+Conformal coverage at 95% target (%),97.01

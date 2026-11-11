@@ -1,7 +1,0 @@
-,0
-Global rank agreement (Spearman),0.983
-Same top-3 questions (out of 3),3.0
-Per-person rank agreement (mean Spearman),0.734
-Same most important question per person (%),84.848
-SHAP time per person (s),0.443
-LIME time per person (s),0.09
