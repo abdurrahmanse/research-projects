@@ -25,6 +25,15 @@ See `docs/project_template.md`. Each project: `README.md`, `requirements.txt`, `
 
 - Autonomous run: `python agent/research_agent.py "<question>" --project <folder>` (see `agent/README.md`)
 
+## Automatic guardrails (`.claude/settings.json` hooks)
+- `guard_files.py` (before Write/Edit): blocks edits to `data/` and direct edits of `.ipynb`
+- `check_notebook_source.py` (after Write/Edit of `notebooks/*.py`): flags unused imports, swallowed errors, silenced warnings, missing `random_state`, fitting on whole data, oversized cells, cells without explanation, hand-typed numbers in markdown, test set used in more than one cell
+- Manual check: `/verify notebooks/<name>.py`
+- Tooling environment: `pip install -r tools/requirements.txt`
+
+## Skills (`.claude/skills/`)
+`beginner-viz`, `model-selection`, `leakage-and-validation`. Notebook template: `docs/notebook_skeleton.py`.
+
 ## Subagents (`.claude/agents/`)
 - `research-tutor`: builds beginner-friendly step-by-step notebooks from a dataset
 - `literature-researcher`: finds and verifies sources, maps gaps

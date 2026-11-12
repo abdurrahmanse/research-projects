@@ -1,24 +1,54 @@
-# Python environments and caches
+# ---------- Secrets (never commit) ----------
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+secrets/
+credentials*.json
+
+# ---------- Python environments and caches ----------
 .venv/
 venv/
 env/
 __pycache__/
 *.py[cod]
+*.egg-info/
 .ipynb_checkpoints/
 .pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.cache/
 
-# OS / editors
+# ---------- ML run artifacts (regenerate from the notebooks) ----------
+catboost_info/
+lightning_logs/
+mlruns/
+wandb/
+runs/
+*.joblib
+*.pkl
+*.pickle
+*.pt
+*.pth
+*.ckpt
+*.h5
+*.onnx
+
+# ---------- OS / editors ----------
 .DS_Store
+._*
+.AppleDouble
+Thumbs.db
 .idea/
 .vscode/*
 !.vscode/extensions.json
 
-# Local-only files
+# ---------- Logs and local-only files ----------
 *.log
 *.local
 
-# Model training logs
-catboost_info/
-
-# Claude local overrides
+# ---------- Claude Code: share the setup, keep personal overrides local ----------
+# Tracked on purpose: CLAUDE.md, .claude/settings.json, .claude/agents/, .claude/commands/, .claude/skills/
 .claude/settings.local.json
+CLAUDE.local.md

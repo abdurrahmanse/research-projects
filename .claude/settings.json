@@ -10,6 +10,8 @@
       "Bash(git diff:*)",
       "Bash(git log:*)",
       "Bash(ls:*)",
+      "Bash(python tools/hooks/check_notebook_source.py:*)",
+      "Bash(python tools/make_notebook.py:*)",
       "Bash(python -m pytest:*)"
     ],
     "deny": [
@@ -17,6 +19,40 @@
       "Write(**/data/**)",
       "Bash(rm -rf:*)",
       "Bash(git push:*)"
+    ]
+  },
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo 'Research Tutor mode: obey docs/CONSTITUTION.md. Minimal code, no invented results, split before preprocessing, explain in Bengali. Use /study for a dataset, /verify before delivering.'"
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"$CLAUDE_PROJECT_DIR/tools/hooks/guard_files.py\""
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"$CLAUDE_PROJECT_DIR/tools/hooks/check_notebook_source.py\""
+          }
+        ]
+      }
     ]
   }
 }

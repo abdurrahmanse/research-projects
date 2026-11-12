@@ -1,0 +1,6 @@
+nbformat
+nbconvert
+ipykernel
+pandas
+scikit-learn
+matplotlib

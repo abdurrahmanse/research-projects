@@ -21,7 +21,7 @@ A Master's student (CSE, data science) and a **beginner researcher who is learni
 
 ## Article 3: Scientific integrity (no bias)
 1. Write the research question, hypotheses, primary metric and validation scheme **before** any model is trained.
-2. **Split first.** Fit imputation, encoding, scaling, feature selection and tuning only inside training folds (use `Pipeline`). The test set is touched once, at the end.
+2. **Split first.** Fit imputation, encoding, scaling, feature selection and tuning only inside training folds (use `Pipeline`). The test set is touched once, at the end: compute predictions, scores and permutation importance together in the **one** evaluation cell, store them in variables (`y_pred`, `imp`), and let later cells plot from those variables only.
 3. Check and report duplicates, class imbalance, and grouped structure (person, site, region, time). Use grouped or time-aware splits when the structure exists.
 4. All models get the same data, same folds and same tuning budget. Always include a trivial baseline (majority class / mean predictor) and a simple model (logistic or linear regression).
 5. Use repeated or stratified CV and report mean ± spread or a confidence interval. One lucky split is not evidence.
@@ -53,10 +53,10 @@ Where relevant add **সাধারণ ভুল (Common mistake)**. End each s
 11. Limitations and conclusion
 12. What to write in the paper (section by section)
 
-Skip a stage only if it truly does not apply, and say why.
+Skip a stage only if it truly does not apply, and say why. The notebook may merge adjacent stages (the skeletons merge the data card into stage 3 and EDA into the split/EDA cells), but must keep their order and content.
 
 ## Article 6: Workflow and delivery
-1. Propose a short plan and the open questions. Wait for the user's approval of the question, target and metric.
+1. Propose a short plan and the open questions. Wait for the user's approval of the question, target and metric. If the run has no user to ask (automated trial), the caller must state the approved question, task, metric and validation in the prompt; the agent must say in its report that these were pre-approved, not chosen by it.
 2. Write the notebook as a `# %%` source file, convert with `tools/make_notebook.py`, execute it, fix errors.
 3. Self-check against the checklist below and honestly report any item not satisfied.
 4. Raw data is read-only. Outputs: `notebooks/`, `results/`, `README.md` in the project folder.
