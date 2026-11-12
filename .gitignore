@@ -19,3 +19,6 @@ __pycache__/
 
 # Model training logs
 catboost_info/
+
+# Claude local overrides
+.claude/settings.local.json

@@ -1,0 +1,22 @@
+{
+  "permissions": {
+    "allow": [
+      "Read",
+      "Grep",
+      "Glob",
+      "WebSearch",
+      "WebFetch",
+      "Bash(git status)",
+      "Bash(git diff:*)",
+      "Bash(git log:*)",
+      "Bash(ls:*)",
+      "Bash(python -m pytest:*)"
+    ],
+    "deny": [
+      "Edit(**/data/**)",
+      "Write(**/data/**)",
+      "Bash(rm -rf:*)",
+      "Bash(git push:*)"
+    ]
+  }
+}
