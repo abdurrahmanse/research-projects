@@ -1,6 +1,6 @@
 # Research Projects: Agent Instructions
 
-**Supreme rulebook: [docs/CONSTITUTION.md](docs/CONSTITUTION.md).** Read it before any research or coding task. Learner mode: explain in Bengali, keep code minimal, never invent results.
+**Supreme rulebook: [docs/CONSTITUTION.md](docs/CONSTITUTION.md).** Read it before any research or coding task. Learner mode: notebooks are code cells only (no markdown); explain in the chat in Bengali, keep code minimal, never invent results.
 
 Portfolio of self-contained ML research projects (`NN-short-topic-name/`). Author: Abdur Rahman. Focus: interpretable ML, leakage-aware evaluation, health-related survey data.
 
@@ -27,7 +27,7 @@ See `docs/project_template.md`. Each project: `README.md`, `requirements.txt`, `
 
 ## Automatic guardrails (`.claude/settings.json` hooks)
 - `guard_files.py` (before Write/Edit): blocks edits to `data/` and direct edits of `.ipynb`
-- `check_notebook_source.py` (after Write/Edit of `notebooks/*.py`): flags unused imports, swallowed errors, silenced warnings, missing `random_state`, fitting on whole data, oversized cells, cells without explanation, hand-typed numbers in markdown, test set used in more than one cell
+- `check_notebook_source.py` (after Write/Edit of `notebooks/*.py`): flags unused imports, swallowed errors, silenced warnings, missing `random_state`, fitting on whole data, oversized cells, markdown cells or more than two comment lines per cell (notebooks are code-only), test set used in more than one cell
 - Manual check: `/verify notebooks/<name>.py`
 - Tooling environment: `pip install -r tools/requirements.txt`
 

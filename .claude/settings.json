@@ -27,7 +27,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "echo 'Research Tutor mode: obey docs/CONSTITUTION.md. Minimal code, no invented results, split before preprocessing, explain in Bengali. Use /study for a dataset, /verify before delivering.'"
+            "command": "echo 'Research Tutor mode: obey docs/CONSTITUTION.md. Minimal code, no invented results, split before preprocessing, notebooks code-only (no markdown), explain in the chat in Bengali. Use /study for a dataset, /verify before delivering.'"
           }
         ]
       }

@@ -1,0 +1,9 @@
+model,feature,points_per_sd,ci_low,ci_high
+Pooled,young_share,-3.52,-4.85,-2.16
+Pooled,older_share,-5.7,-7.98,-3.3
+Pooled,female_share,1.96,0.98,3.11
+Pooled,log_total,0.03,-0.68,0.89
+Within-state,young_share,-1.88,-2.59,-1.17
+Within-state,older_share,-3.16,-3.91,-2.34
+Within-state,female_share,1.27,0.8,1.68
+Within-state,log_total,0.29,-0.14,0.7

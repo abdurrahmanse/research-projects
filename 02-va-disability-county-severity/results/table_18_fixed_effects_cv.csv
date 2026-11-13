@@ -1,0 +1,7 @@
+design,model,weighting,r2,r2_min,r2_max,rmse,mae
+State only (one-hot),Linear regression,unweighted,0.618,0.616,0.62,5.007,3.849
+State only (one-hot),Linear regression,recipient-weighted,0.414,0.409,0.42,6.0,4.522
+Features only,Linear regression,unweighted,0.377,0.375,0.379,6.394,5.111
+Features only,Linear regression,recipient-weighted,0.51,0.506,0.512,5.489,4.434
+Features + state one-hot,Linear regression,unweighted,0.718,0.715,0.72,4.303,3.316
+Features + state one-hot,Linear regression,recipient-weighted,0.756,0.752,0.76,3.874,3.024

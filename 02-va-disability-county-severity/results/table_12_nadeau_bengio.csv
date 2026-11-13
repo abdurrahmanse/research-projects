@@ -1,0 +1,3 @@
+,n_fold_scores,mean_diff,ci_low,ci_high,p_raw,p_holm
+GB minus baseline,50.0,0.4097,0.2137,0.6058,0.0001,0.0002
+GB minus linear,50.0,0.0097,-0.0399,0.0593,0.6954,0.6954

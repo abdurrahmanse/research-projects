@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Constitution linter for '# %%' notebook sources (notebooks/*.py).
+"""Constitution linter for '# %%' notebook sources (notebooks/*.py). Code cells only, no markdown.
 
 Hook mode : reads the Claude Code hook JSON on stdin; checks only notebooks/*.py.
 CLI mode  : python tools/hooks/check_notebook_source.py notebooks/study.py
@@ -12,6 +12,8 @@ import sys
 from pathlib import Path
 
 MAX_CODE_LINES = 20
+MAX_COMMENT_LINES = 2
+LEGACY_WITH_MARKDOWN = {"02_robustness_checks.py"}  # written before the code-only rule
 NEEDS_SEED = {
     "train_test_split", "RepeatedStratifiedKFold", "RepeatedKFold", "ShuffleSplit",
     "RandomForestClassifier", "RandomForestRegressor", "ExtraTreesClassifier", "ExtraTreesRegressor",
@@ -41,7 +43,7 @@ def call_name(node):
     return f.id if isinstance(f, ast.Name) else f.attr if isinstance(f, ast.Attribute) else None
 
 
-def lint(text):
+def lint(text, legacy=False):
     out = []
     cells = split_cells(text)
     try:
@@ -87,14 +89,13 @@ def lint(text):
             lines = [l for l in body.split("\n") if l.strip() and not l.strip().startswith("#")]
             if len(lines) > MAX_CODE_LINES:
                 out.append(f"line {start}: code cell has {len(lines)} lines (max {MAX_CODE_LINES}); split it (Article 1.3)")
-            if idx == 0 or cells[idx - 1][0] != "md":
-                out.append(f"line {start}: code cell has no Bengali explanation cell before it (Article 4)")
+            comments = [l for l in body.split("\n") if l.strip().startswith("#")]
+            if len(comments) > MAX_COMMENT_LINES:
+                out.append(f"line {start}: {len(comments)} comment lines; notebooks are code only, keep at most {MAX_COMMENT_LINES} (Article 4)")
             if re.search(r"\b(X_test|y_test)\b", body) and "train_test_split" not in body:
                 test_cells.append(start)
-        else:
-            for m in re.finditer(r"\b0\.\d{3,}\b|\b\d+\.\d+\s?%", body):
-                out.append(f"line {start}: hand-typed number '{m.group()}' in markdown; "
-                           "results must come from printed output (Article 2.3)")
+        elif not legacy:
+            out.append(f"line {start}: markdown cell not allowed; notebooks are code cells only (Article 4)")
     if len(test_cells) > 1:
         out.append(f"lines {test_cells}: test set used in {len(test_cells)} cells; touch it once (Article 3.2)")
     return out
@@ -111,7 +112,7 @@ def main():
         paths = [fp] if re.search(r"/notebooks/[^/]+\.py$", fp or "") else []
     bad = 0
     for p in paths:
-        problems = lint(Path(p).read_text(encoding="utf-8"))
+        problems = lint(Path(p).read_text(encoding="utf-8"), Path(p).name in LEGACY_WITH_MARKDOWN)
         for msg in problems:
             print(f"{p}: {msg}", file=sys.stderr)
         bad += len(problems)

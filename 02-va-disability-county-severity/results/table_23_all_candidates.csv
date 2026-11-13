@@ -1,0 +1,11 @@
+,r2_u,r2_min,r2_max,rmse_u,r2_w,rmse_w
+Overall average (baseline),-0.0469,-0.0969,-0.0121,8.2902,-0.274,8.8471
+Linear regression,0.329,0.2944,0.3567,6.6369,0.4695,5.7085
+Gradient boosting,0.3387,0.308,0.3633,6.5887,0.4726,5.6922
+Ridge (tuned),0.3259,0.2916,0.3573,6.6521,0.4712,5.6992
+Ridge + poly2 (tuned),0.335,0.2854,0.3669,6.6069,0.4396,5.8662
+Random forest (tuned),0.3247,0.2903,0.3488,6.6583,0.459,5.7649
+HistGB (tuned),0.338,0.2929,0.3673,6.5917,0.469,5.7116
+"Ridge, recipient-weighted fit",0.3191,0.2851,0.346,6.6857,0.4831,5.6353
+"HistGB, recipient-weighted fit",0.2775,0.2114,0.3209,6.8853,0.4411,5.8579
+Ensemble: best linear + best tree,0.3469,0.31,0.3756,6.5473,0.4678,5.7176

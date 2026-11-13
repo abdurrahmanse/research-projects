@@ -1,0 +1,13 @@
+design,model,weighting,r2,r2_min,r2_max,rmse,mae
+Leave-one-state-out,Overall average (baseline),unweighted,-0.04,-0.04,-0.04,8.263,6.509
+Leave-one-state-out,Overall average (baseline),recipient-weighted,-0.269,-0.269,-0.269,8.829,7.108
+Leave-one-state-out,Linear regression,unweighted,0.333,0.333,0.333,6.615,5.296
+Leave-one-state-out,Linear regression,recipient-weighted,0.469,0.469,0.469,5.713,4.628
+Leave-one-state-out,Gradient boosting,unweighted,0.345,0.345,0.345,6.56,5.246
+Leave-one-state-out,Gradient boosting,recipient-weighted,0.473,0.473,0.473,5.689,4.517
+Region-blocked,Overall average (baseline),unweighted,-0.75,-0.75,-0.75,10.719,8.975
+Region-blocked,Overall average (baseline),recipient-weighted,-1.129,-1.129,-1.129,11.438,9.519
+Region-blocked,Linear regression,unweighted,-0.097,-0.097,-0.097,8.487,6.983
+Region-blocked,Linear regression,recipient-weighted,0.309,0.309,0.309,6.516,5.215
+Region-blocked,Gradient boosting,unweighted,-0.132,-0.132,-0.132,8.621,7.059
+Region-blocked,Gradient boosting,recipient-weighted,0.223,0.223,0.223,6.912,5.528

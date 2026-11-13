@@ -1,0 +1,52 @@
+state,fips_prefix,region
+Illinois,17,Midwest
+Indiana,18,Midwest
+Iowa,19,Midwest
+Kansas,20,Midwest
+Michigan,26,Midwest
+Minnesota,27,Midwest
+Missouri,29,Midwest
+Nebraska,31,Midwest
+North Dakota,38,Midwest
+Ohio,39,Midwest
+South Dakota,46,Midwest
+Wisconsin,55,Midwest
+Connecticut,09,Northeast
+Maine,23,Northeast
+Massachusetts,25,Northeast
+New Hampshire,33,Northeast
+New Jersey,34,Northeast
+New York,36,Northeast
+Pennsylvania,42,Northeast
+Rhode Island,44,Northeast
+Vermont,50,Northeast
+Alabama,01,South
+Arkansas,05,South
+Delaware,10,South
+District Of Columbia,11,South
+Florida,12,South
+Georgia,13,South
+Kentucky,21,South
+Louisiana,22,South
+Maryland,24,South
+Mississippi,28,South
+North Carolina,37,South
+Oklahoma,40,South
+South Carolina,45,South
+Tennessee,47,South
+Texas,48,South
+Virginia,51,South
+West Virginia,54,South
+Alaska,02,West
+Arizona,04,West
+California,06,West
+Colorado,08,West
+Hawaii,15,West
+Idaho,16,West
+Montana,30,West
+Nevada,32,West
+New Mexico,35,West
+Oregon,41,West
+Utah,49,West
+Washington,53,West
+Wyoming,56,West

@@ -1,0 +1,13 @@
+design,model,weighting,r2,r2_min,r2_max,rmse,mae
+Random folds,Overall average (baseline),unweighted,-0.001,-0.003,-0.0,8.108,6.373
+Random folds,Overall average (baseline),recipient-weighted,-0.226,-0.23,-0.223,8.681,6.977
+Random folds,Linear regression,unweighted,0.377,0.375,0.379,6.394,5.111
+Random folds,Linear regression,recipient-weighted,0.51,0.506,0.512,5.489,4.434
+Random folds,Gradient boosting,unweighted,0.405,0.402,0.409,6.252,4.998
+Random folds,Gradient boosting,recipient-weighted,0.525,0.515,0.537,5.403,4.305
+State-grouped folds,Overall average (baseline),unweighted,-0.047,-0.097,-0.012,8.29,6.531
+State-grouped folds,Overall average (baseline),recipient-weighted,-0.274,-0.33,-0.232,8.847,7.129
+State-grouped folds,Linear regression,unweighted,0.329,0.294,0.357,6.637,5.304
+State-grouped folds,Linear regression,recipient-weighted,0.469,0.437,0.498,5.708,4.613
+State-grouped folds,Gradient boosting,unweighted,0.339,0.308,0.363,6.589,5.249
+State-grouped folds,Gradient boosting,recipient-weighted,0.473,0.442,0.494,5.692,4.529

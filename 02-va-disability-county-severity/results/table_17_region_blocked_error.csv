@@ -1,0 +1,5 @@
+group,counties,recipients,Overall average (baseline) | rmse,Overall average (baseline) | bias,Linear regression | rmse,Linear regression | bias,Gradient boosting | rmse,Gradient boosting | bias
+Northeast,213,600157,4.98,1.67,4.74,-0.16,4.82,0.18
+West,363,1389892,6.17,1.89,6.78,0.94,6.67,1.44
+South,1274,3125827,11.13,-9.83,8.35,-6.57,8.37,-6.74
+Midwest,824,1096956,12.58,9.88,10.0,7.33,10.36,7.6

@@ -1,0 +1,4 @@
+,estimate,ci_low,ci_high
+GB R2 gap: random minus grouped,0.066,0.049,0.088
+Grouped R2: GB minus linear,0.01,-0.032,0.048
+Between-state share of variance (eta-squared),0.633,0.499,0.712

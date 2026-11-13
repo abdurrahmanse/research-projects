@@ -5,7 +5,7 @@ description: Rules and minimal recipes for clear, honest, beginner-friendly rese
 # Beginner-friendly research visualization
 
 ## Rules
-1. **One chart answers one question.** State the question in the markdown cell before the chart.
+1. **One chart answers one question.** Name it in the cell's stage label and state it in the chat explanation.
 2. Plain matplotlib (pandas `.plot`) first. Add seaborn only if the chart is impossible without it.
 3. Always: title, axis labels with units, legend only if more than one series. Readable at paper size (dpi=150, `bbox_inches="tight"`).
 4. Save every figure to `results/figures/` with a descriptive name. Do not skip saving.
@@ -13,7 +13,7 @@ description: Rules and minimal recipes for clear, honest, beginner-friendly rese
 6. Show uncertainty: box plots or error bars for CV results, never bare bars of means.
 7. No pie charts, 3D charts, dual axes or decorative styling. Bars start at zero; box/line charts may not.
 8. Colour-blind safe: use one hue plus grey, or matplotlib's default cycle. Do not encode meaning by red/green alone.
-9. After each chart, the markdown says how to read it in one line (what a good/bad pattern looks like). Numbers in text come from printed output, not from eyeballing.
+9. Notebooks have no markdown: explain how to read each chart in the chat reply (what a good/bad pattern looks like). Numbers in that explanation come from printed output, not from eyeballing.
 
 ## Which chart for which question
 | Question | Chart | Recipe |
