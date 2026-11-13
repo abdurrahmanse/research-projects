@@ -67,7 +67,7 @@ Mean of 10 repeats of 5-fold cross-validation. The grouped score was lower than 
 
 - A state-average lookup scores R² 0.62 under random folds only because other counties of the same state are in training. For an unseen state it falls back to the overall mean and equals the baseline. This shows strong clustering by state; it does not show that the state carries more information than the features. With state indicators in the model (random folds), adding the four features raises R² from 0.62 to 0.72 (recipient-weighted: 0.41 to 0.76), so the features add information within states ([table_18](results/table_18_fixed_effects_cv.csv)).
 - Gradient boosting is not distinguishable from linear regression: the grouped R² difference is 0.010 (95% CI −0.032 to 0.048, state bootstrap; corrected paired t-test p = 0.70 after Holm). Both beat the overall average (difference 0.41 for gradient boosting, p = 0.0002; [table_12](results/table_12_nadeau_bengio.csv)). These tests use the 50 per-fold scores, which are not independent, so the correction is approximate.
-- Gradient boosting uses fixed settings and the linear model needs none; no hyperparameter was tuned, so the comparison is a reference, not a tuned contest. The "10 of 10 repeats" above shows that the result is stable across partitions of the same 51 states, not that it is statistically significant.
+- The two models above use fixed settings; a tuned comparison is in the next section. The "10 of 10 repeats" above shows that the result is stable across partitions of the same 51 states, not that it is statistically significant.
 
 ![Random vs grouped folds](results/fig_04_cv_random_vs_grouped.png)
 
@@ -80,9 +80,9 @@ Mean of 10 repeats of 5-fold cross-validation. The grouped score was lower than 
 | Only counties with 500+ recipients | 1,638 | 0.36 |
 | Outcome = share rated 100% | 2,674 | 0.36 |
 
-### Robustness checks (second notebook)
+### Robustness checks (Part 2 of the notebook)
 
-[notebooks/02_robustness_checks.ipynb](notebooks/02_robustness_checks.ipynb) re-checks the results after review. It reproduces the headline numbers above first.
+[notebooks/va_disability_county_severity.ipynb](notebooks/va_disability_county_severity.ipynb) re-checks the results after review. It reproduces the headline numbers above first.
 
 | Held-out unit | Model | R², counties equal | R², recipient-weighted | RMSE (points), counties equal |
 |---|---|---|---|---|
@@ -98,6 +98,22 @@ Mean of 10 repeats of 5-fold cross-validation. The grouped score was lower than 
 - Largest leave-one-state-out errors: South Dakota, Indiana, Minnesota, Nebraska and Alaska (RMSE 9.9 to 12.9 points, all over-predicted; [table_16](results/table_16_loso_per_state_error.csv)).
 - **Left-out counties.** Of the 470, 287 have a computable outcome but a blank feature cell, so the model could not score them; they hold 29,749 recipients with a pooled high share of 49.8%, against 58.6% in the main sample. Given their states, 54.7% would be expected, so about half of the gap is state composition ([table_20](results/table_20_selection_check.csv)). The other 183 have no computable outcome.
 
+### Tuned models and literature comparison (Parts 3 and 4 of the notebook)
+
+[notebooks/va_disability_county_severity.ipynb](notebooks/va_disability_county_severity.ipynb) tunes six candidates and an ensemble with inner state-grouped CV inside each outer training set, on the same 50 outer folds.
+
+| Model | Grouped R² | Paired R² difference vs gradient boosting (95% state bootstrap CI) |
+|---|---|---|
+| Gradient boosting (reference) | 0.339 | n/a |
+| Ridge (tuned) | 0.326 | −0.013 (−0.053 to 0.031) |
+| Random forest (tuned) | 0.325 | −0.014 (−0.028 to 0.004) |
+| HistGB (tuned) | 0.338 | −0.001 (−0.011 to 0.014) |
+| Ensemble linear + tree | 0.347 | +0.008 (−0.009 to 0.029) |
+
+No candidate improves on the reference by the pre-set rule (lower CI bound above 0; Holm-adjusted p = 1.0 for all, [table_25](results/table_25_paired_vs_reference.csv)). Distance to the nearest training county does not explain which held-out states are predicted badly (Spearman 0.04, p = 0.81, [table_26](results/table_26_area_of_applicability.csv)).
+
+[notebooks/va_disability_county_severity.ipynb](notebooks/va_disability_county_severity.ipynb) compares this project with published work. No published benchmark exists for this outcome, so absolute R² is not compared. The random-to-grouped drop is 0.07 here (gradient boosting) against 0.39 in Ploton et al. (2020, random forest, forest biomass; R² 0.53 to 0.14), a different domain used only to illustrate the same effect ([table_27](results/table_27_validation_gap_comparison.csv), [fig_11](results/fig_11_validation_gap_vs_published.png)). Methods are mapped to the cited guidance in [table_28](results/table_28_method_comparison.csv).
+
 ## Limitations
 
 - **No denominators.** The file has no population or veteran counts, so nothing here is a rate per resident or per veteran. Every result is about the mix of people who already receive compensation.
@@ -107,7 +123,7 @@ Mean of 10 repeats of 5-fold cross-validation. The grouped score was lower than 
 - **No explanation of the state differences.** The gap between states is large (Minnesota is 7 points below the next state) and this dataset cannot say why. It deserves a check against the original source before being quoted.
 - **One snapshot.** No time dimension, no external validation set, and no final held-out test stage: all evaluation is cross-validation, which is acceptable for a descriptive study.
 - **Metrics count counties equally.** The headline R² gives a 62-recipient county the same weight as a 98,000-recipient one; recipient-weighted values are given next to it.
-- **Untuned models, small model set.** Gradient boosting has fixed settings, the linear model has none, there is no random forest or ridge, and the comparison is not a tuned contest.
+- **Small feature set.** Four county features only; tuned ridge, random forest and boosting (Part 3) add nothing, so the limit is the features, not the model.
 - **Spatial leakage is only partly removed.** State-grouped folds keep neighbouring counties of different states in training; region blocking is a stricter check but the folds are few and unequal.
 - **Recipients only.** There is no veteran or resident population, so selection into compensation is unobserved.
 - **"Noise" is a model assumption.** The 2.2-point expected SD assumes independent recipients sharing one national rate; a rejection means counties are not homogeneous, not that every difference is a real effect of the county.
@@ -131,7 +147,7 @@ A literature review with 16 sources and 6 unverified leads is in [research/](res
 | Leakage control | Other rating bands and the 45–64 share are not used as features (they sum to 100% with the outcome or with other features) |
 | Variation | Observed variance against binomial variance; chi-square test of equal shares |
 | Association | Spearman correlation and standardised linear coefficients; state cluster bootstrap for 95% CIs |
-| Prediction | Baseline, state average, linear regression, gradient boosting; fixed settings, no tuning |
+| Prediction | Baseline, state average, linear regression, gradient boosting (fixed); Part 3 of the notebook adds tuned ridge, random forest, HistGB and an ensemble |
 | Validation | 5-fold CV × 10 repeats, random folds and state-grouped folds reported side by side; leave-one-state-out and Census-region blocks in the robustness notebook |
 | Comparison tests | State-cluster bootstrap (2,000 resamples of states, stored out-of-fold predictions, no refit) and Nadeau–Bengio corrected paired t-test with Holm correction |
 | Seed | 42 |
@@ -143,10 +159,9 @@ A literature review with 16 sources and 6 unverified leads is in [research/](res
 ├── README.md
 ├── requirements.txt
 ├── data/            raw CSV (read-only) and DATA_CARD.md
-├── notebooks/       va_disability_county_severity.ipynb  (main analysis, 48 small tasks)
-│                    02_robustness_checks.ipynb        (review response: weighting, LOSO, regions, tests, fixed effects)
+├── notebooks/       va_disability_county_severity.ipynb  (one notebook: main analysis, robustness, tuned models, literature comparison)
 ├── research/        literature review, research gaps, references (AI-drafted, to be checked)
-└── results/         8 figures (PNG), 21 tables (CSV) and audit.md written by or about the notebooks
+└── results/         11 figures (PNG), 28 tables (CSV) and audit.md written by or about the notebooks
 ```
 
 ## Reproduce
@@ -155,8 +170,7 @@ A literature review with 16 sources and 6 unverified leads is in [research/](res
 cd 02-va-disability-county-severity
 python3.11 -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
-cd notebooks && jupyter lab va_disability_county_severity.ipynb     # Run All, about 1.5 minutes
-# then 02_robustness_checks.ipynb (about 40 seconds; reads the same CSV)
+cd notebooks && jupyter lab va_disability_county_severity.ipynb     # Run All, about 5 minutes
 ```
 
 The recorded notebook outputs were produced with slightly different library versions than those pinned in `requirements.txt`; an independent re-run under the pinned versions gave the same headline numbers.

@@ -1,0 +1,6 @@
+,r2_random,r2_grouped,drop,source
+Gradient boosting,0.405,0.339,0.066,this project
+Linear regression,0.377,0.329,0.048,this project
+Overall average (baseline),-0.001,-0.047,0.046,this project
+State average,0.618,-0.047,0.665,this project
+"Ploton 2020: random forest, forest biomass",0.53,0.14,0.39,"Ploton et al. 2020, Nat. Commun. 11:4540"

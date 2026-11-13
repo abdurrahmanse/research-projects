@@ -1,0 +1,7 @@
+Published point,Source,What this project did
+Random CV is optimistic with dependent data,Roberts et al. 2017 (source 5),Reported random and state-grouped folds side by side
+Spatial validation can reveal poor performance,Ploton et al. 2020 (source 6),Gap measured: see table above
+CV error holds only where new data resemble training data,Meyer and Pebesma 2021 (source 7),Nearest-neighbour distance vs state error (notebook 03)
+Spatial CV may be unjustified; use probability-sample validation,Wadoux et al. 2021 (source 10),Not done: no probability sample available
+Shrink noisy small-area proportions,"Efron and Morris 1975; Fay and Herriot 1979 (sources 11, 12)",Not done: listed as a gap in research/research_gaps.md
+Area-level correlation is not individual-level,"Robinson 1950; Subramanian et al. 2009 (sources 15, 16)",Stated as a limitation; within-state coefficients reported

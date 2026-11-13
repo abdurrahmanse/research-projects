@@ -1,0 +1,52 @@
+state,counties,mean_nn_distance,rmse
+Alabama,67,0.316,5.264
+Alaska,12,0.498,9.891
+Arizona,15,0.326,5.423
+Arkansas,71,0.253,6.717
+California,56,0.373,5.513
+Colorado,48,0.335,7.734
+Connecticut,9,0.241,4.615
+Delaware,3,0.36,2.363
+District Of Columbia,1,0.348,6.7
+Florida,67,0.337,3.883
+Georgia,150,0.35,5.805
+Hawaii,4,0.296,4.495
+Idaho,36,0.222,5.357
+Illinois,88,0.251,5.761
+Indiana,89,0.212,11.125
+Iowa,88,0.231,7.549
+Kansas,47,0.243,3.784
+Kentucky,97,0.236,6.864
+Louisiana,58,0.232,5.887
+Maine,16,0.207,3.639
+Maryland,24,0.345,5.124
+Massachusetts,13,0.368,2.942
+Michigan,83,0.219,3.857
+Minnesota,73,0.297,10.94
+Mississippi,76,0.312,5.351
+Missouri,103,0.204,4.609
+Montana,39,0.274,7.338
+Nebraska,42,0.235,9.947
+Nevada,12,0.279,4.959
+New Hampshire,10,0.167,4.725
+New Jersey,21,0.367,5.866
+New Mexico,26,0.318,7.828
+New York,61,0.24,4.832
+North Carolina,97,0.297,6.823
+North Dakota,22,0.341,6.776
+Ohio,88,0.214,7.05
+Oklahoma,68,0.208,8.408
+Oregon,33,0.226,5.178
+Pennsylvania,65,0.198,4.568
+Rhode Island,5,0.243,5.277
+South Carolina,46,0.28,4.973
+South Dakota,30,0.294,12.912
+Tennessee,93,0.219,5.085
+Texas,179,0.335,5.607
+Utah,22,0.333,4.112
+Vermont,13,0.227,4.804
+Virginia,126,0.4,5.377
+Washington,38,0.254,6.101
+West Virginia,51,0.267,6.606
+Wisconsin,71,0.209,7.683
+Wyoming,22,0.224,6.635
