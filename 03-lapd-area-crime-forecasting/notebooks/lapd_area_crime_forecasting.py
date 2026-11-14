@@ -250,6 +250,16 @@ cv_summary.to_csv(RESULTS / "table_03_all_validation_configs.csv", index=False)
 best_configs.to_csv(RESULTS / "table_04_best_validation_models.csv", index=False)
 best_configs.round(3)
 
+# %% comparison table
+comparison_table = best_configs.rename(columns={
+    "family": "Model family", "config": "Best configuration",
+    "mae_mean": "Validation MAE", "mae_sd": "MAE SD", "wape_mean": "WAPE",
+}).reset_index(drop=True)
+comparison_table.insert(0, "Rank", np.arange(1, len(comparison_table) + 1))
+comparison_table["WAPE (%)"] = comparison_table.pop("WAPE") * 100
+comparison_table.to_csv(RESULTS / "table_04_model_comparison.csv", index=False)
+print(comparison_table.round(2).to_string(index=False))
+
 # %% champion
 champion = best_configs.iloc[0]
 CHAMPION_FAMILY = champion.family

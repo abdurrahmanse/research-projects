@@ -16,7 +16,7 @@
 - [x] 2023 predictions stored once, then reused for plots and diagnostics
 - [x] Uncertainty comparison resamples whole test months, not individual area rows
 - [x] 2024 labelled as reporting-system shift stress test
-- [x] Notebook contains 48 code cells, zero markdown cells, and passes the repository linter
+- [x] Notebook contains 49 code cells, zero markdown cells, and passes the repository linter
 - [x] Notebook executed top to bottom without a cell error
 - [x] Requirements pinned and citations opened/verified
 
@@ -24,7 +24,7 @@
 
 | Claim | Evidence |
 |---|---|
-| 3-month mean won validation | `table_04_best_validation_models.csv` |
+| 3-month mean won validation | `table_04_model_comparison.csv` |
 | 2023 MAE 48.98 and WAPE 5.26% | `table_06_test_metrics.csv` |
 | Area/month errors | `table_07_test_error_by_area.csv`, `table_08_test_error_by_month.csv` |
 | Approximate interval coverage 95.24% | `table_06_test_metrics.csv` |

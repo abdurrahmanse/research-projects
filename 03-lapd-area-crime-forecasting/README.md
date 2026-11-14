@@ -23,7 +23,7 @@ This project asks whether past incident counts can forecast the next month's num
 | Poisson regression (`alpha=0.1`) | 62.87 | 6.76% |
 | Histogram boosting (`31` leaves, L2 `1`) | 66.94 | 7.17% |
 
-The seasonal-naive rule's validation MAE is 121.30. All 24 tried configurations, including weaker ones, remain in [table_03_all_validation_configs.csv](results/table_03_all_validation_configs.csv).
+The seasonal-naive rule's validation MAE is 121.30. The printed family comparison is saved in [table_04_model_comparison.csv](results/table_04_model_comparison.csv); all 24 tried configurations, including weaker ones, remain in [table_03_all_validation_configs.csv](results/table_03_all_validation_configs.csv).
 
 ## Final 2023 evaluation
 
@@ -117,7 +117,7 @@ pip install -r requirements.txt
 python ../tools/make_notebook.py notebooks/lapd_area_crime_forecasting.py notebooks/lapd_area_crime_forecasting.ipynb --run
 ```
 
-Run from the project directory so the notebook's relative paths resolve. The delivered notebook has 48 code-only cells, no markdown cells, and was executed top to bottom.
+Run from the project directory so the notebook's relative paths resolve. The delivered notebook has 49 code-only cells, no markdown cells, and was executed top to bottom.
 
 ## Responsible use
 
