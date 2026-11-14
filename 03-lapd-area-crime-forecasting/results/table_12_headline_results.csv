@@ -1,0 +1,7 @@
+quantity,value
+selected_family,Historical rule
+selected_configuration,3-month mean
+validation_MAE,57.931216931216916
+test_MAE,48.98412698412698
+test_WAPE,0.052609147786358446
+stress_MAE,122.0079365079365

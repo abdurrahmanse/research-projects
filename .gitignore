@@ -35,6 +35,10 @@ runs/
 *.h5
 *.onnx
 
+# ---------- Large local research data ----------
+# Keep the LAPD source dataset locally; use the data card for provenance and retrieval details.
+03-lapd-area-crime-forecasting/data/raw/CrimeData.csv
+
 # ---------- OS / editors ----------
 .DS_Store
 ._*
