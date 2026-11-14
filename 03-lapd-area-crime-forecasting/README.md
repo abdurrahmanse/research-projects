@@ -4,7 +4,7 @@
 
 ## Abstract
 
-This project asks whether past incident counts can forecast the next month's number of crimes **reported** in each of 21 LAPD areas. The supplied file contains 1,004,894 incident rows. Reports dated 2020–2024 are aggregated to area-months; no victim attribute, crime label, precise location or case outcome enters a model. Six model families are compared with 12 expanding-window forecast origins in 2022 and equal four-configuration budgets for each trainable family. The transparent trailing 3-month mean wins validation (MAE 57.93 incidents per area-month), ahead of tuned Ridge (60.11), XGBoost (61.11), random forest (61.24), Poisson regression (62.87) and histogram boosting (66.94). In the 2023 evaluation it achieves MAE **48.98**, WAPE **5.26%** and RMSE **61.58**. Its MAE is 21.83 lower than seasonal naive (month-block bootstrap 95% CI 12.41–32.95). A March 2024 LAPD records-system transition breaks continuity: legacy-file stress-test MAE rises to 122.01 and WAPE to 22.93%. The 2024 decline is treated as measurement shift, not a real crime decline.
+This project asks whether past incident counts can forecast the next month's number of crimes **reported** in each of 21 LAPD areas. The supplied file contains 1,004,894 incident rows. Reports dated 2020–2024 are aggregated to area-months; no victim attribute, crime label, precise location or case outcome enters a model. Six model families are compared with 12 expanding-window forecast origins in 2022 and equal four-configuration budgets for each trainable family. The transparent trailing 3-month mean wins validation (MAE 57.93 incidents per area-month), ahead of tuned Ridge (60.11), XGBoost (61.11), random forest (61.24), Poisson regression (62.87) and histogram boosting (66.94). In the 2023 evaluation it achieves MAE **48.98**, WAPE **5.26%**, a WAPE-based forecast score of **94.74%**, **R² 0.891**, and RMSE **61.58**. Its MAE is 21.83 lower than seasonal naive (month-block bootstrap 95% CI 12.41–32.95). A March 2024 LAPD records-system transition breaks continuity: legacy-file stress-test MAE rises to 122.01 and WAPE to 22.93%. The 2024 decline is treated as measurement shift, not a real crime decline.
 
 ## Research question and answer
 
@@ -31,6 +31,8 @@ The seasonal-naive rule's validation MAE is 121.30. All 24 tried configurations,
 |---|---:|
 | MAE | **48.98 incidents per area-month** |
 | WAPE | **5.26%** |
+| WAPE-based forecast score (`100% − WAPE`) | **94.74%** |
+| R² | **0.891** |
 | RMSE | 61.58 |
 | Mean Poisson deviance | 3.96 |
 | Approximate 90% residual-interval coverage | 95.24% |
@@ -41,6 +43,10 @@ The seasonal-naive rule's validation MAE is 121.30. All 24 tried configurations,
 ![2023 forecasts](results/fig_03_test_monthly_total.png)
 
 The interval is a diagnostic rather than a formal guarantee: only 12 rolling validation months are available and the 21 area observations within a month are dependent.
+
+### How to interpret the 94.74% figure
+
+The **94.74%** value is `100% − WAPE`, included as an intuitive forecast score. It means that total absolute forecast error equals 5.26% of the total recorded count. It is **not classification accuracy** and should not be compared with accuracy values from classification papers. MAE and WAPE remain the primary evaluation metrics; R² is reported as a standard secondary regression metric.
 
 ## 2024 reporting-system stress test
 

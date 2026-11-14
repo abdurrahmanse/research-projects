@@ -21,7 +21,7 @@ from sklearn.base import clone
 from sklearn.compose import ColumnTransformer
 from sklearn.ensemble import HistGradientBoostingRegressor, RandomForestRegressor
 from sklearn.linear_model import PoissonRegressor, Ridge
-from sklearn.metrics import mean_poisson_deviance, root_mean_squared_error
+from sklearn.metrics import mean_poisson_deviance, r2_score, root_mean_squared_error
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import OneHotEncoder, StandardScaler
 from xgboost import XGBRegressor
@@ -304,7 +304,9 @@ covered = test_results.crime_count.between(test_results.lower_90, test_results.u
 test_metrics = pd.Series({
     "MAE": test_results.absolute_error.mean(),
     "WAPE": test_results.absolute_error.sum() / test_results.crime_count.sum(),
+    "WAPE-based forecast score": 1 - test_results.absolute_error.sum() / test_results.crime_count.sum(),
     "RMSE": root_mean_squared_error(test_results.crime_count, test_results.predicted),
+    "R2": r2_score(test_results.crime_count, test_results.predicted),
     "Poisson deviance": mean_poisson_deviance(test_results.crime_count, test_results.predicted.clip(1e-6)),
     "Approximate 90% interval coverage": covered,
 }, name="value")
